@@ -3,31 +3,31 @@
 
 # project/
 # ├── dashboard/
-# │   ├── index.html
-# │   ├── assets/
-# │       ├── css/
-# │           ├── style.js
-# │       ├── images/
-# │       ├── js/
-# │           ├── dashboard.js
-# │   ├── components/
-# │       ├── contact-info-panel.js
-# │       ├── emoji-picker.js
-# │       └── quick-replies.js
+#     ├── index.html
+#     ├── components/
+#         ├── contact-info-panel.js
+#         ├── emoji-picker.js
+#         └── quick-replies.js
+#     ├── assets/
+#         ├── css/
+#             ├── style.js
+#         ├── images/
+#         ├── js/
+#             ├── dashboard.js
 # ├── data/
-# │   ├── contacts.json
-# │   ├── contatos.csv
-# │   ├── messages.csv
-# │   ├── quick_replies.json
+#     ├── contacts.json
+#     ├── contatos.csv
+#     ├── messages.csv
+#     ├── quick_replies.json
 # ├── templates-manager/
-# │   ├── index.html
-# │   ├── assets/
-# │       ├── css/
-# │           ├── style.js
-# │       ├── images/
-# │           ├── logo.png
-# │       ├── js/
-# │           ├── templates-manager.js
+#     ├── index.html
+#     ├── assets/
+#         ├── css/
+#             ├── style.js
+#         ├── images/
+#             ├── logo.png
+#         ├── js/
+#             ├── templates-manager.js
 # ├── .env
 # └── .gitattributes
 # └── .gitignore
