@@ -1,0 +1,30 @@
+{
+  "name": "wabusiness",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "agent": "node agent-IA.js",
+    "dashboard": "node dashboard-server.js",
+    "mock": "node mock-api-server.js",
+    "templates": "node templates-server.js",
+    "webhook": "node webhook-router.js",
+    "processador": "node processador.js"
+  },
+  "keywords": [],
+  "author": "Ivo Linsmeyer Filho",
+  "license": "ISC",
+  "devDependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "fs": "^0.0.1-security",
+    "https": "^1.0.0",
+    "wss": "^3.3.4"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^16.5.0",
+    "morgan": "^1.10.0"
+  }
+}

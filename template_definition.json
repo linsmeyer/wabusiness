@@ -1,0 +1,31 @@
+{
+  "name": "fatura_e_promocao",
+  "language_code": "pt_BR",
+  "components": {
+    "header": [
+      {
+        "type": "image",
+        "csv_column": "id_imagem_produto"
+      }
+    ],
+    "body": [
+      {
+        "type": "text",
+        "csv_column": "nome"
+      },
+      {
+        "type": "text",
+        "csv_column": "sobrenome"
+      },
+      {
+        "type": "currency",
+        "csv_column": "valor_fatura",
+        "currency_code": "BRL"
+      },
+      {
+        "type": "date_time",
+        "csv_column": "data_vencimento"
+      }
+    ]
+  }
+}

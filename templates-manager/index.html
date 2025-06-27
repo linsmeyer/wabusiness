@@ -1,0 +1,130 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Templates do WhatsApp</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Visualizador e Compositor de Templates do WhatsApp</h1>
+        <div class="main-grid">
+            <!-- Coluna de Controles -->
+            <div class="controls-panel">
+                <h2>1. Controles e Composição</h2>
+                
+                <!-- NOVO: Gerenciamento de Templates -->
+                <div class="template-management">
+                    <div class="control-group">
+                        <label for="template-selector">Carregar Exemplo:</label>
+                        <select id="template-selector"></select>
+                    </div>
+                    <div class="control-group">
+                        <label for="saved-template-selector">Carregar Salvo:</label>
+                        <select id="saved-template-selector">
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <hr>
+
+                <div class="component-editor">
+                    <!-- NOVO: Nome e Categoria -->
+                    <fieldset>
+                        <legend>Dados do Template</legend>
+                        <label for="template-name-input">Nome do Template (minúsculas, sem espaços):</label>
+                        <input type="text" id="template-name-input" placeholder="ex: promocao_natal">
+                        <label for="template-category-selector">Categoria:</label>
+                        <select id="template-category-selector">
+                            <option value="MARKETING">Marketing</option>
+                            <option value="UTILITY">Utilidade</option>
+                            <option value="AUTHENTICATION">Autenticação</option>
+                        </select>
+                    </fieldset>
+                    
+                    <fieldset>
+                        <legend>HEADER (Opcional)</legend>
+                        <select id="header-type">
+                            <option value="none">Nenhum</option>
+                            <option value="text">Texto</option>
+                            <option value="image">Imagem</option>
+                            <option value="video">Vídeo</option>
+                            <option value="document">Documento</option>
+                        </select>
+                        <input type="text" id="header-content" class="hidden" placeholder="Texto do Header. Use os botões abaixo para variáveis.">
+                        
+                        <!-- NOVO: Botões de Variáveis para o Header -->
+                        <div id="header-variable-actions" class="variable-actions hidden">
+                            <button id="add-header-variable-btn">+ Variável no Header</button>
+                            <button id="remove-header-variable-btn">- Variável no Header</button>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>BODY (Obrigatório)</legend>
+                        <textarea id="body-content" placeholder="Corpo da mensagem..."></textarea>
+                        <div class="variable-actions">
+                            <button id="add-body-variable-btn">+ Variável</button>
+                            <button id="remove-body-variable-btn">- Variável</button>
+                        </div>
+                    </fieldset>
+
+
+                    <!-- NOVO: Seção de exemplos agora é global -->
+                    <fieldset>
+                        <legend>Valores de Exemplo (Para Preview)</legend>
+                        <div id="variables-editor"></div>
+                    </fieldset>
+
+                    <fieldset><legend>FOOTER (Opcional)</legend><input type="text" id="footer-content" placeholder="Texto do rodapé"></fieldset>
+
+                    <fieldset>
+                        <legend>BUTTONS (Opcional)</legend>
+                        <div id="buttons-editor"></div>
+                        <div class="button-actions">
+                            <button id="add-reply-btn">+ Resposta Rápida</button>
+                            <button id="add-cta-btn">+ Chamada para Ação</button>
+                        </div>
+                    </fieldset>
+                </div>
+                
+                <!-- NOVO: Botões de Ação do LocalStorage -->
+                <div class="storage-actions">
+                    <button id="save-template-btn">💾 Salvar Template</button>
+                    <button id="delete-template-btn">🗑️ Deletar Selecionado</button>
+                </div>
+            </div>
+
+            <!-- Coluna de Preview -->
+            <div class="preview-panel">
+                <h2>2. Preview Visual</h2>
+                <!-- ... (código do preview inalterado) ... -->
+                <div class="phone-mockup">
+                    <div class="screen">
+                        <div class="wa-header-bar"></div>
+                        <div class="wa-chat-area">
+                            <div class="wa-bubble">
+                                <div id="preview-header" class="wa-header"></div>
+                                <div id="preview-body" class="wa-body"></div>
+                                <div id="preview-footer" class="wa-footer"></div>
+                            </div>
+                            <div id="preview-buttons" class="wa-buttons-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna de JSON -->
+            <div class="json-panel">
+                <h2>3. Payload JSON (Para Aprovação)</h2>
+                <button id="render-from-json-btn">Renderizar a partir do JSON</button>
+                <textarea id="json-output" spellcheck="false"></textarea>
+            </div>
+        </div>
+    </div>
+    <script src="assets/js/templates-manager.js"></script>
+</body>
+</html>

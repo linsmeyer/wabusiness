@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface de Chat - WhatsApp</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <!-- NOVO: Layout principal que engloba tudo -->
+    <div class="app-layout">
+        <!-- NOVO: Barra de navegação lateral -->
+        <nav class="main-nav">
+            <div class="nav-top">
+                <div class="logo">
+                    <!-- Você pode substituir por sua tag <img> -->
+                    <svg viewBox="0 0 24 24" width="48" height="48"><path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"></path></svg>
+                </div>
+            </div>
+            <div class="nav-bottom">
+                <button id="theme-toggle-btn" class="theme-toggle" title="Mudar para modo escuro">
+                    <span id="theme-icon-sun" class="theme-icon hidden">
+                        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 5c-3.86 0-7 3.14-7 7s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zM12 3c.7 0 1.37.1 2 .29V1h-4v2.29c.63-.19 1.3-.29 2-.29zm-7.89 4.11L2.7 5.7l1.42-1.42L5.53 5.7c-.55.55-.99 1.2-1.42 1.41zM12 21c-.7 0-1.37-.1-2-.29V23h4v-2.29c-.63.19-1.3.29-2 .29zm7.89-4.11l1.41 1.41-1.42 1.42-1.41-1.41c.55-.55.99-1.2 1.42-1.41zM23 11v2h-2.29c.19-.63.29-1.3.29-2s-.1-1.37-.29-2H23zM3.29 13H1v-2h2.29c-.19.63-.29 1.3-.29 2s.1 1.37.29 2zm13.58-5.89l1.42-1.42 1.41 1.41-1.41 1.42c-.55-.55-1.2-.99-1.42-1.41zM5.53 18.3l-1.42 1.42-1.41-1.41 1.41-1.42c.55.55 1.2.99 1.42 1.41z"></path></svg>
+                    </span>
+                    <span id="theme-icon-moon" class="theme-icon">
+                        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 11.25A4.755 4.755 0 0 0 16.75 6.5c0-.985-.3-1.897-.812-2.65A9.933 9.933 0 0 0 12 2c-5.523 0-10 4.477-10 10s4.477 10 10 10c2.455 0 4.706-.884 6.438-2.35a4.721 4.721 0 0 0-2.25-1.277A4.753 4.753 0 0 0 12 11.25z"></path></svg>
+                    </span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="chat-container">
+            <!-- Barra Lateral com a Lista de Conversas -->
+            <aside class="sidebar">
+                <header class="sidebar-header">
+                    <h3>Conversas</h3>
+                </header>
+                <ul id="conversation-list" class="conversation-list">
+                    <!-- Lista será populada por JS -->
+                </ul>
+            </aside>
+
+            <!-- Área Principal do Chat -->
+            <main class="chat-area">
+                <header id="chat-header" class="chat-header">
+                    <h3 id="contact-name">Selecione uma conversa</h3>
+                </header>
+                <div id="message-list" class="message-list">
+                    <!-- Mensagens serão populadas por JS -->
+                    <div class="placeholder">Selecione uma conversa para começar</div>
+                </div>
+                <footer id="chat-composer" class="chat-composer hidden">
+                    <!-- NOVO: Contêiner para o seletor de emojis -->
+                    <div id="emoji-picker-container" class="emoji-picker hidden">
+                        <!-- O painel de emojis será gerado por JS aqui -->
+                    </div>
+
+                    <!-- NOVO: Painel de Mensagens Rápidas -->
+                    <div id="quick-reply-picker" class="picker-panel hidden">
+                        <div class="picker-header">
+                            <input type="search" id="quick-reply-search" placeholder="Pesquisar...">
+                            <button id="add-quick-reply-btn" title="Adicionar nova mensagem rápida">+</button>
+                        </div>
+                        <ul id="quick-reply-list" class="picker-list"></ul>
+                    </div>
+
+                    <!-- NOVO: Botão de emoji -->
+                    <button id="emoji-button" class="composer-button">
+                        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M9.153 11.603c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962zm-3.204 1.362c-.026-.307-.131 5.218 5.063 5.551 5.063.333 5.168-5.252 5.168-5.551H5.949zM12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm4.847-11.603c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962z"></path></svg>
+                    </button>
+
+                    <!-- NOVO: Botão de Mensagens Rápidas -->
+                    <button id="quick-reply-button" class="composer-button">
+                        <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M19.914 4.086a2 2 0 0 0-2.828 0L6.04 15.132l-3.04 8.767 8.767-3.04L22.742 7.086a2 2 0 0 0 0-2.828L19.914 4.086zM8.154 17.27l-1.414 1.414-4.242 1.414 1.414-4.242 1.414-1.414L13.586 6l2.828 2.828-8.26 8.442z"></path></svg>
+                    </button>
+                    
+                    <input type="text" id="message-input" placeholder="Digite uma mensagem">
+                    <button id="send-button" class="composer-button send">Enviar</button>
+                </footer>
+            </main>
+
+            <!-- NOVO: Painel Lateral de Informações do Contato -->
+            <aside id="contact-info-panel" class="info-panel hidden">
+                <header class="info-panel-header">
+                    <h3>Informações do Contato</h3>
+                    <button id="close-info-panel-btn">X</button>
+                </header>
+                <div class="info-panel-body">
+                    <!-- Conteúdo será preenchido por JS -->
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- NOVO: Modal para Adicionar/Editar Mensagem Rápida -->
+    <div id="quick-reply-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 id="modal-title">Adicionar Mensagem Rápida</h3>
+            <form id="quick-reply-form">
+                <input type="hidden" id="reply-id">
+                <label for="reply-name">Nome (para busca):</label>
+                <input type="text" id="reply-name" required>
+
+                <label for="reply-text">Texto da Mensagem:</label>
+                <textarea id="reply-text" rows="4"></textarea>
+
+                <label for="reply-image">URL da Imagem (opcional):</label>
+                <input type="url" id="reply-image">
+
+                <label for="reply-template">Template Associado (opcional):</label>
+                <input type="text" id="reply-template" placeholder="ex: boas_vindas_2">
+                
+                <div class="modal-actions">
+                    <button type="button" id="cancel-modal-btn">Cancelar</button>
+                    <button type="submit">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Carrega o novo componente ANTES do script principal -->
+    <script src="components/emoji-picker.js"></script>
+    <script src="components/contact-info-panel.js"></script>
+    <script src="components/quick-replies.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

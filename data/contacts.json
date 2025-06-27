@@ -1,0 +1,23 @@
+{
+  "5511987654321": {
+    "profile": {
+      "name": "Maria Silva"
+    },
+    "wa_id": "5511987654321",
+    "observations": "Cliente interessada no produto X. Entrou em contato pela primeira vez em 10/11."
+  },
+  "5521912345678": {
+    "profile": {
+      "name": "João Santos"
+    },
+    "wa_id": "5521912345678",
+    "observations": "nenhuma"
+  },
+  "5511999991111": {
+    "profile": {
+      "name": "Ana"
+    },
+    "wa_id": "5511999991111",
+    "observations": "Retornar contato sobre o endereço. ok"
+  }
+}

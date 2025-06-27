@@ -1,0 +1,16 @@
+[
+  {
+    "id": "qr_1700000001",
+    "name": "Saudação Inicial",
+    "text": "Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",
+    "imageUrl": "",
+    "templateName": ""
+  },
+  {
+    "id": "qr_1700000002",
+    "name": "Horário e Endereço",
+    "text": "Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",
+    "imageUrl": "https://i.imgur.com/map-example.png",
+    "templateName": ""
+  }
+]
