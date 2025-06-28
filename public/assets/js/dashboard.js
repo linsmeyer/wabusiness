@@ -316,6 +316,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const state = {
+        allConversations: {},
+        allContacts: {},
+        activeConversationId: null,
+        currentFilter: 'all',
+        searchTerm: '',
+        openDropdownContactId: null,
+    };
+
+    function renderAll() {
+        applyFiltersAndRender();
+        renderActiveChat();
+    }
+
+    async function fetchAllData() {
+        try {
+            const [convosRes, contactsRes] = await Promise.all([
+                fetch('/api/conversations'),
+                fetch('/api/contacts')
+            ]);
+            state.allConversations = await convosRes.json();
+            state.allContacts = await contactsRes.json();
+            renderAll();
+        } catch (error) {
+            console.error("Erro ao buscar dados:", error);
+        }
+    }
+
     async function fetchAll() {
 
         const openMenuContactIdBeforeFetch = uiState.openDropdownContactId;
@@ -349,67 +377,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hasChanged) {
                 console.log("[DATA] Dados atualizados, renderizando UI...");
                 allConversations = newConversations;
-                allContacts = newContacts;
-                renderConversationList();
+                allContacts = newContacts;                
+                // applyFiltersAndRender();
+                applyFiltersAndRender();
                 if (activeConversationId && allConversations[activeConversationId]) {
                     renderMessagesFor(activeConversationId, true);
-                    
                 }
             }
         } catch (error) {
             console.error("Erro ao buscar dados:", error);
-        }
-    }
-
-    function renderConversationList() {
-        const lastActiveId = activeConversationId;
-        conversationList.innerHTML = '';
-
-        let conversationsToRender = Object.values(allConversations);
-
-        if (currentFilter === 'unread') {
-            conversationsToRender = conversationsToRender.filter(c => c.unreadCount > 0);
-        }
-        
-        conversationsToRender.forEach(convo => {
-            const contactId = convo.contact;
-            const contactDetails = allContacts[contactId];
-            const displayName = contactDetails?.profile?.name || contactId;
-            const lastMessage = convo.messages.slice(-1)[0] || {};
-            const timestamp = lastMessage.timestamp ? new Date(lastMessage.timestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
-            
-            const li = document.createElement('li');
-            const isActiveClass = contactId === activeConversationId ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
-            li.className = `conversation-item  ${isActiveClass}`;
-            li.dataset.contactId = contactId;
-            li.innerHTML = `
-                    <div class="flex-grow flex items-center overflow-hidden" data-action="select-convo">
-                        <div class="w-12 h-12 bg-gray-300 rounded-full mr-4 flex-shrink-0"></div>
-                        <div class="flex-grow overflow-hidden">
-                            <div class="flex items-center">
-                                <h3 class="font-semibold truncate">${displayName}</h3>
-                                ${convo.unreadCount > 0 ? `<span class="bg-wa-green-dark text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2"  style="margin-right:20px;margin-top:0px;">${convo.unreadCount}</span>` : ''}
-                            </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${lastMessage.text || ''}</p>
-                            <div class="convo-timestamp">${timestamp}</div>
-                        </div>
-                    </div>
-
-                    <!-- Botão do Dropdown (fora da área clicável principal) -->
-                    <button class="dropdown-button" data-action="toggle-dropdown">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    </button>
-
-                    <!-- Menu Dropdown -->
-                    <div class="dropdown-menu" data-role="dropdown-menu">
-                        <button class="dropdown-item" data-action="mark-unread">Marcar como não lida</button>
-                    </div>
-                `;
-                conversationList.appendChild(li); 
-        });
-            
-        if (lastActiveId && allConversations[lastActiveId]) {
-            document.querySelector(`.conversation-item[data-contact-id="${lastActiveId}"]`)?.classList.add('active');
         }
     }
     
@@ -507,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 messageInput.value = '';
             }
 
-            // renderConversationList();
+            // applyFiltersAndRender();
 
             if (activeConversationId && allConversations[activeConversationId]) {
                 renderMessagesFor(activeConversationId, false);
@@ -541,7 +517,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         messageInput.value = '';
 
-        // renderConversationList();
+        // applyFiltersAndRender();
     
         if (activeConversationId && allConversations[activeConversationId]) {
             renderMessagesFor(activeConversationId, false);

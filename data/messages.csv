@@ -1,7 +1,7 @@
 timestamp,from,type,content,message_id,direction,is_read
-1678886400,5511987654321,text,"Olá, gostaria de mais informações!",wamid.123,in,true
+1678886400,5511987654321,text,"Olá, gostaria de mais informações!",wamid.123,in,false
 1678886520,5511987654321,text,"Claro! Em que posso ajudar? Esta é uma resposta simulada.",wamid.456,out,true
-1678887000,5521912345678,text,"Qual o horário de funcionamento?",wamid.789,in,true
+1678887000,5521912345678,text,"Qual o horário de funcionamento?",wamid.789,in,false
 1750701400,5511987654321,text,"teste",wamid.simulated.1750701400843,out,true
 1750701422,5511987654321,text,"OK",wamid.simulated.1750701422076,out,true
 1750701479,5521912345678,text,"das 9h as 18h",wamid.simulated.1750701479912,out,true
@@ -43,3 +43,9 @@ timestamp,from,type,content,message_id,direction,is_read
 1751142085,5511999991111,text,"🥰",wamid.simulated.1751142085390,out,true
 1751144582,5511987654321,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1751144582981,out,true
 1751144593,5521912345678,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1751144593987,out,true
+1751144625,5521912345678,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751144625723,out,true
+1751145067,5511987654321,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751145067002,out,true
+1751145127,5521912345678,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1751145127086,out,true
+1751145191,5521912345678,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751145191628,out,true
+1751145199,5521912345678,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1751145199814,out,true
+1751145281,5511999991111,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751145281047,out,true
