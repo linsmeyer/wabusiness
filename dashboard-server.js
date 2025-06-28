@@ -1,4 +1,4 @@
-// dashbiard-server.js
+// unified-server.js
 
 /* INFORMAÇÕES DA ARQUITETURA DO PROJETO
 
@@ -13,80 +13,18 @@ const path = require('path');
 const csv = require('csv-parser');
 
 const app = express();
-const PORT = 4000; // Usaremos uma porta diferente para a interface
-const CSV_FILE_PATH = path.join(__dirname, 'data', 'messages.csv');
-const CONTACTS_FILE_PATH = path.join(__dirname, 'data', 'contacts.json');
+const PORT = 4000;
+
+const PUBLIC_PATH = path.join(__dirname, 'public');
+const DATA_PATH = path.join(__dirname, 'data');
+const CSV_FILE_PATH = path.join(DATA_PATH, 'messages.csv');
+const CONTACTS_FILE_PATH = path.join(DATA_PATH, 'contacts.json');
+const QR_FILE_PATH = path.join(DATA_PATH, 'quick_replies.json');
+
 
 app.use(express.json());
 // app.use(cors()); // Descomente se precisar
-app.use(express.static('dashboard')); // Serve os arquivos da pasta 'dashboard'
-
-// --- API PARA OBTER CONVERSAS ---
-/*
-app.get('/api/conversations', async (req, res) => {
-    const conversations = {};
-
-    if (!fs.existsSync(CSV_FILE_PATH)) {
-        return res.json({}); // Retorna objeto vazio se o arquivo não existe
-    }
-
-    fs.createReadStream(CSV_FILE_PATH)
-        .pipe(csv())
-        .on('data', (row) => {
-            const contactNumber = row.from;
-            if (!conversations[contactNumber]) {
-                conversations[contactNumber] = {
-                    contact: contactNumber,
-                    messages: []
-                };
-            }
-            conversations[contactNumber].messages.push({
-                id: row.message_id,
-                text: row.content,
-                timestamp: row.timestamp,
-                direction: row.direction, // 'in' ou 'out'
-            });
-        })
-        .on('end', () => {
-            // Ordena as mensagens dentro de cada conversa por timestamp
-            for (const contact in conversations) {
-                conversations[contact].messages.sort((a, b) => a.timestamp - b.timestamp);
-            }
-            res.json(conversations);
-        });
-});
-*/
-
-// --- API PARA ENVIAR MENSAGEM ---
-// Esta rota simula o envio e ATUALIZA nosso CSV para que a interface reflita a nova mensagem
-/*
-app.post('/api/send', (req, res) => {
-    const { to, text } = req.body;
-    if (!to || !text) {
-        return res.status(400).json({ error: 'Número e texto são obrigatórios.' });
-    }
-
-    // 1. Simula a chamada para o Mock da API da Meta (que estaria em outra porta)
-    console.log(`[SIMULAÇÃO] Enviando para o mock da API: to=${to}, text=${text}`);
-    // fetch('http://localhost:8080/v18.0/YOUR_PHONE_ID/messages', { ... })
-
-    // 2. Adiciona a mensagem enviada ao nosso "banco de dados" CSV
-    const newRow = {
-        timestamp: Math.floor(Date.now() / 1000),
-        from: to, // Agrupamos pelo número do cliente
-        type: 'text',
-        content: text,
-        message_id: `wamid.simulated.${Date.now()}`,
-        direction: 'out' // Marcamos como enviada
-    };
-
-    const csvLine = `${newRow.timestamp},${newRow.from},${newRow.type},"${newRow.content}",${newRow.message_id},${newRow.direction}`;
-    fs.appendFileSync(CSV_FILE_PATH, csvLine);
-
-    res.status(200).json({ success: true, message: newRow });
-});
-*/
-
+app.use(express.static(PUBLIC_PATH));
 
 // Rota de conversas completa
 app.get('/api/conversations', async (req, res) => {
@@ -259,66 +197,6 @@ app.post('/api/conversations/:contactId/mark-as-unread', (req, res) => {
     updateReadStatus(req, res, 'unread');
 });
 
-// --- Endpoint centralizado para registrar CADA mensagem no CSV ---
-/*
-app.post('/api/log-message', (req, res) => {
-    const { from, text, direction } = req.body;
-    if (!from || !text || !direction) {
-        return res.status(400).send('Dados insuficientes para logar mensagem.');
-    }
-
-    const newRow = {
-        timestamp: Math.floor(Date.now() / 1000),
-        from: from,
-        type: 'text',
-        content: text, // Escapa aspas
-        message_id: `wamid.simulated.${Date.now()}`,
-        direction: direction
-    };
-    
-    // const csvLine = `\n${Object.values(newRow).map(v => `${v}`).join(',')}`;
-    const csvLine = `${newRow.timestamp},${newRow.from},${newRow.type},"${newRow.content}",${newRow.message_id},${newRow.direction}\n`;
-    
-    console.log('csvLine');
-    console.log(csvLine);
-    
-    // Garante que o arquivo e o cabeçalho existam
-    if (!fs.existsSync(CSV_FILE_PATH)) {
-        fs.writeFileSync(CSV_FILE_PATH, 'timestamp,from,type,content,message_id,direction');
-    }
-    
-    fs.appendFileSync(CSV_FILE_PATH, csvLine);
-    console.log(`[CHAT-DB] Mensagem [${direction.toUpperCase()}] de/para ${from} registrada.`);
-    res.status(200).json(newRow);
-});
-*/
-
-
-// --- Rota para o HUMANO enviar uma mensagem pela interface ---
-/*
-app.post('/api/send', async (req, res) => {
-    const { to, text } = req.body;
-    
-    // 1. Registra a mensagem que o humano enviou
-    await fetch(`http://localhost:${PORT}/api/log-message`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: to, text, direction: 'out' })
-    });
-    
-    // 2. Simula o usuário recebendo e aciona o webhook da IA
-    // Em um cenário real, isso não seria necessário. A Meta faria isso.
-    console.log(`[SIMULAÇÃO] Acionando Webhook da IA para a mensagem enviada...`);
-    // Aqui não precisamos fazer nada, pois a resposta da IA é para a próxima mensagem do cliente.
-    
-    res.status(200).json({ success: true });
-});
-*/
-
-const QR_FILE_PATH = path.join(__dirname, 'data', 'quick_replies.json');
-
-// --- NOVAS ROTAS PARA MENSAGENS RÁPIDAS (QUICK REPLIES) ---
-
 // GET /api/quick-replies - Lê todas as mensagens rápidas
 app.get('/api/quick-replies', (req, res) => {
     if (!fs.existsSync(QR_FILE_PATH)) {
@@ -375,8 +253,6 @@ app.post('/api/send', async (req, res) => {
     res.status(200).json({ success: true });
 });
 
-// --- NOVAS ROTAS PARA INFORMAÇÕES DE CONTATO ---
-
 // GET /api/contacts - Lê todos os contatos
 app.get('/api/contacts', (req, res) => {
     if (!fs.existsSync(CONTACTS_FILE_PATH)) {
@@ -423,5 +299,8 @@ app.post('/api/contacts/:contactId', (req, res) => {
     res.status(200).json(allContacts[contactId]);
 });
 
-
-app.listen(PORT, () => console.log(`Servidor da Interface de Chat rodando em http://localhost:${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor Unificado rodando em http://localhost:${PORT}`);
+    console.log(`   -> Interface de Chat: http://localhost:${PORT}`);
+    console.log(`   -> Interface de Templates: http://localhost:${PORT}/templates`);
+});
