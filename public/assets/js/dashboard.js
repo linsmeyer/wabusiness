@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activeConversationId = contactId;
         uiState.openDropdownContactId = null;
 
-        applyFiltersAndRender();
+        // applyFiltersAndRender();
         
         chatHeader.classList.remove('hidden');
 
@@ -507,7 +507,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 messageInput.value = '';
             }
 
-            renderConversationList();
+            // renderConversationList();
+
             if (activeConversationId && allConversations[activeConversationId]) {
                 renderMessagesFor(activeConversationId, false);
             }
@@ -539,7 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
             })
         });
         messageInput.value = '';
-        renderConversationList();
+
+        // renderConversationList();
     
         if (activeConversationId && allConversations[activeConversationId]) {
             renderMessagesFor(activeConversationId, false);
