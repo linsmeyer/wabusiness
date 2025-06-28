@@ -276,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const displayName = contactDetails?.profile?.name || contactId;
             const lastMessage = convo.messages.slice(-1)[0] || {};
             const li = document.createElement('li');
+            const timestamp = lastMessage.timestamp ? new Date(lastMessage.timestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
             
             const isActiveClass = contactId === activeConversationId ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
             li.className = `group conversation-item ${isActiveClass}`;
@@ -289,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ${convo.unreadCount > 0 ? `<span class="bg-wa-green-dark text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2"  style="margin-right:20px;margin-top:0px;">${convo.unreadCount}</span>` : ''}
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${lastMessage.text || ''}</p>
+                            <div class="convo-timestamp">${timestamp}</div>
                         </div>
                     </div>
 
@@ -374,7 +376,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const contactDetails = allContacts[contactId];
             const displayName = contactDetails?.profile?.name || contactId;
             const lastMessage = convo.messages.slice(-1)[0] || {};
-
+            const timestamp = lastMessage.timestamp ? new Date(lastMessage.timestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+            
             const li = document.createElement('li');
             const isActiveClass = contactId === activeConversationId ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
             li.className = `conversation-item  ${isActiveClass}`;
@@ -388,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ${convo.unreadCount > 0 ? `<span class="bg-wa-green-dark text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 ml-2"  style="margin-right:20px;margin-top:0px;">${convo.unreadCount}</span>` : ''}
                             </div>
                             <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${lastMessage.text || ''}</p>
+                            <div class="convo-timestamp">${timestamp}</div>
                         </div>
                     </div>
 
