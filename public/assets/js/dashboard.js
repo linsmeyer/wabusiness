@@ -9,21 +9,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatComposer = document.getElementById('chat-composer');
     const chatHeader = document.getElementById('chat-header');
     const contactInfoPanelElement = document.getElementById('contact-info-panel');
-
-    const themeToggleButton = document.getElementById('theme-toggle-btn');
-    const themeIconSun = document.getElementById('theme-icon-sun');
-    const themeIconMoon = document.getElementById('theme-icon-moon');
     const bodyElement = document.body;
     const searchInput = document.getElementById('conversation-search');
     const filterBtnAll = document.getElementById('filter-btn-all');
     const filterBtnUnread = document.getElementById('filter-btn-unread');
+    const emojiButton = document.getElementById('emoji-button');
+    const emojiPickerContainer = document.getElementById('emoji-picker-container');
+    const quickReplyButton = document.getElementById('quick-reply-button');
+    const quickReplyPicker = document.getElementById('quick-reply-picker');
+    const quickReplyModal = document.getElementById('quick-reply-modal');
+    const themeToggleButton = document.getElementById('theme-toggle-btn');
+    const themeIconSun = document.getElementById('theme-icon-sun');
+    const themeIconMoon = document.getElementById('theme-icon-moon');
     const templateManagerBtn = document.getElementById('template-manager-btn');
-
-    // let allConversations = {};
-    // let allContacts = {};
-    // let state.activeConversationId = null;
-    // let currentFilter = 'all';
-    // let searchTerm = '';
+    const savedTheme = localStorage.getItem('whatsapp-theme') || 'light';
 
     const state = {
         allConversations: {},
@@ -44,23 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         closeAll: function() { this.panels.forEach(panel => panel.classList.add('hidden')); }
     };
-
-    /*
-    conversationList.addEventListener('click', (e) => {
-        const target = e.target.closest('[data-action]');
-        if (!target) return;
-        
-        e.stopPropagation();
-        const contactId = e.target.closest('.conversation-item').dataset.contactId;
-
-        if (target.dataset.action === 'select-convo') handleConversationSelect(contactId);
-        if (target.dataset.action === 'toggle-dropdown') handleDropdownToggle(contactId);
-        if (target.dataset.action === 'mark-unread') {
-            state.openDropdownContactId = null;
-            markConversationAsUnread(contactId);
-        }
-    });
-    */
     
     conversationList.addEventListener('click', (e) => {
         const actionTarget = e.target.closest('[data-action]');
@@ -111,112 +93,83 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function sendMessageFast(messageData = null) {
+        
+        if (!state.activeConversationId) {
+            console.error("[SEND] Erro: Nenhuma conversa ativa selecionada.");
+            alert("Selecione uma conversa para enviar!");
+            return;
+        }
 
-    searchInput.addEventListener('input', (e) => {
-        state.searchTerm = e.target.value;
-        renderConversationList();
-    });
+        let payload;
 
-    filterBtnAll.addEventListener('click', () => {
-        state.currentFilter = 'all';
-        filterBtnAll.classList.add('active');
-        filterBtnUnread.classList.remove('active');
-        renderConversationList();
-    });
-
-    filterBtnUnread.addEventListener('click', () => {
-        state.currentFilter = 'unread';
-        filterBtnUnread.classList.add('active');
-        filterBtnAll.classList.remove('active');
-        renderConversationList();
-    });
-   
-    function applyTheme(theme) {
-        if (theme === 'dark') {
-            bodyElement.classList.add('dark-theme');
-            themeIconSun.classList.remove('hidden');
-            themeIconMoon.classList.add('hidden');
-            themeToggleButton.title = "Mudar para modo claro";
+        if (messageData) {
+            if (!state.activeConversationId) return;
+            payload = {
+                to: state.activeConversationId,
+                text: messageData.text || '',
+                imageUrl: messageData.imageUrl || '',
+                templateName: messageData.templateName || ''
+            };
         } else {
-            bodyElement.classList.remove('dark-theme');
-            themeIconSun.classList.add('hidden');
-            themeIconMoon.classList.remove('hidden');
-            themeToggleButton.title = "Mudar para modo escuro";
+            const text = messageInput.value.trim();
+            if (!text || !state.activeConversationId) return;
+            payload = { to: state.activeConversationId, text: text };
         }
-    }
+        
+        console.log('[sendMessage] Enviando payload para o backend:', payload);
 
-    function toggleTheme() {
-        const currentTheme = bodyElement.classList.contains('dark-theme') ? 'dark' : 'light';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-        localStorage.setItem('whatsapp-theme', newTheme);
-        applyTheme(newTheme);
-    }
-
-    const savedTheme = localStorage.getItem('whatsapp-theme') || 'light';
-    applyTheme(savedTheme);
-
-    themeToggleButton.addEventListener('click', toggleTheme);
-
-    let contactInfoPanel;
-    contactInfoPanel = initializeContactInfoPanel({
-        panel: contactInfoPanelElement,
-        header: chatHeader,
-        closeButton: document.getElementById('close-info-panel-btn'),
-        body: contactInfoPanelElement.querySelector('.info-panel-body'),
-        onSave: async (contactId, dataToSave) => {
-            console.log(`[SAVE] Salvando dados para ${contactId}:`, dataToSave);
-
-            try {
-                const response = await fetch(`/api/contacts/${contactId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dataToSave)
-                });
-                const updatedContact = await response.json();
-
-                state.allContacts[contactId] = updatedContact;
-                
-                const li = conversationList.querySelector(`[data-contact-id="${contactId}"] .font-semibold`);
-                if (li) li.textContent = updatedContact.profile.name || contactId;
-                
-                if (state.activeConversationId === contactId) {
-                    document.getElementById('contact-name').textContent = updatedContact.profile.name || contactId;
-                }
-
-            } catch (error) {
-                console.error("Erro ao salvar dados do contato:", error);
-            }
-        }
-    });
-
-    const emojiButton = document.getElementById('emoji-button');
-    const emojiPickerContainer = document.getElementById('emoji-picker-container');
-
-    initializeEmojiPicker({
-        inputField: messageInput,
-        pickerContainer: emojiPickerContainer
-    });
-
-    const quickReplyButton = document.getElementById('quick-reply-button');
-    const quickReplyPicker = document.getElementById('quick-reply-picker');
-    const quickReplyModal = document.getElementById('quick-reply-modal');
-
-    let quickRepliesComponent = initializeQuickReplies({
-        pickerContainer: quickReplyPicker,
-        searchInput: document.getElementById('quick-reply-search'),
-        addButton: document.getElementById('add-quick-reply-btn'),
-        listContainer: document.getElementById('quick-reply-list'),
-        modal: quickReplyModal,
-        onSend: (replyData) => {
-            sendMessageFast({
-                text: replyData.text,
-                imageUrl: replyData.imageUrl,
-                templateName: replyData.templateName
+        try {
+            const response = await fetch('/api/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
+
+            if (!response.ok) {
+                throw new Error('Falha na API de envio.');
+            }
+
+            if (!messageData) {
+                messageInput.value = '';
+            }
+
+            if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
+                renderActiveChat();
+            }
+
+        } catch (error) {
+            console.error('Erro ao enviar mensagem:', error);
         }
-    });
+    }
+
+    async function sendMessage() {
+
+        if (!state.activeConversationId) {
+            console.error("[SEND] Erro: Nenhuma conversa ativa selecionada.");
+            alert("Selecione uma conversa para enviar!");
+            return;
+        }
+
+        const text = messageInput.value.trim();
+        if (!text || !state.activeConversationId)
+            return;
+        await fetch('/api/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                to: state.activeConversationId,
+                text: text
+            })
+        });
+        messageInput.value = '';
     
+        if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
+            renderActiveChat();
+        }
+    }
 
     function renderConversationList() {
 
@@ -285,9 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Renderiza o painel de chat para a conversa ativa.
-     */
     function renderActiveChat() {
         if (!state.activeConversationId) {
             chatHeader.classList.add('hidden');
@@ -314,45 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
             messageList.scrollTop = messageList.scrollHeight;
         }
     }
-
-    function renderAll() {
-        renderConversationList();
-        renderActiveChat();
-    }
-
-    function handleConversationSelect(contactId) {
-        if (state.activeConversationId === contactId) return;
-        
-        state.activeConversationId = contactId;
-        state.openDropdownContactId = null; 
-
-        renderAll();
-
-        if (state.allConversations[contactId]?.unreadCount > 0) {
-            markConversationAsRead(contactId);
-        }
-    }
-
-    function handleDropdownToggle(contactId) {
-        state.openDropdownContactId = (state.openDropdownContactId === contactId) ? null : contactId;
-        renderConversationList();
-    }
-
-    /* sugerido
-    async function fetchAllData() {
-        try {
-            const [convosRes, contactsRes] = await Promise.all([
-                fetch('/api/conversations'),
-                fetch('/api/contacts')
-            ]);
-            state.allConversations = await convosRes.json();
-            state.allContacts = await contactsRes.json();
-            renderAll();
-        } catch (error) {
-            console.error("Erro ao buscar dados:", error);
-        }
-    }
-    */
 
     async function fetchAllData() {
 
@@ -388,10 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log("[DATA] Dados atualizados, renderizando UI");
                 state.allConversations = newConversations;
                 state.allContacts = newContacts;                
-                // renderConversationList();
                 renderConversationList();
                 if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
-                    // renderMessagesFor(state.activeConversationId, true);
                     renderActiveChat();
                 }
             }
@@ -400,15 +309,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function renderAll() {
+        renderConversationList();
+        renderActiveChat();
+    }
 
-    async function selectConversation(contactId) {
+    function handleConversationSelect(contactId) {
         if (state.activeConversationId === contactId) return;
         
         state.activeConversationId = contactId;
-        state.openDropdownContactId = null;
+        state.openDropdownContactId = null; 
 
-        // renderConversationList();
-        
         chatHeader.classList.remove('hidden');
 
         const contactDetails = state.allContacts[contactId];
@@ -428,36 +339,41 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.conversation-item').forEach(item => {
             item.classList.toggle('active', item.dataset.contactId === contactId);
         });
-        
-        // renderMessagesFor(contactId);
-        renderActiveChat();
-        
+
+        renderAll();
+
         if (state.allConversations[contactId]?.unreadCount > 0) {
-            console.log(`Marcando conversa ${contactId} como lida...`);
-            await fetch(`/api/conversations/${contactId}/mark-as-read`, { method: 'POST' });
-            await fetchAll();
+            markConversationAsRead(contactId);
+        }
+
+    }
+
+    function handleDropdownToggle(contactId) {
+        state.openDropdownContactId = (state.openDropdownContactId === contactId) ? null : contactId;
+        renderConversationList();
+    }
+   
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            bodyElement.classList.add('dark-theme');
+            themeIconSun.classList.remove('hidden');
+            themeIconMoon.classList.add('hidden');
+            themeToggleButton.title = "Mudar para modo claro";
+        } else {
+            bodyElement.classList.remove('dark-theme');
+            themeIconSun.classList.add('hidden');
+            themeIconMoon.classList.remove('hidden');
+            themeToggleButton.title = "Mudar para modo escuro";
         }
     }
 
-    
-    PanelManager.register(quickReplyPicker);
+    function toggleTheme() {
+        const currentTheme = bodyElement.classList.contains('dark-theme') ? 'dark' : 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 
-    quickReplyButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        contactInfoPanel.hide();
-        quickRepliesComponent.load();
-        PanelManager.open(quickReplyPicker);
-    });
-
-
-    PanelManager.register(emojiPickerContainer);
-
-    emojiButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        contactInfoPanel.hide();
-        PanelManager.open(emojiPickerContainer);
-    });
-
+        localStorage.setItem('whatsapp-theme', newTheme);
+        applyTheme(newTheme);
+    }
 
     function closeAllDropdowns() {
         document.querySelectorAll('[data-role="dropdown-menu"]:not(.hidden)').forEach(menu => {
@@ -469,11 +385,112 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let contactInfoPanel = initializeContactInfoPanel({
+        panel: contactInfoPanelElement,
+        header: chatHeader,
+        closeButton: document.getElementById('close-info-panel-btn'),
+        body: contactInfoPanelElement.querySelector('.info-panel-body'),
+        onSave: async (contactId, dataToSave) => {
+            console.log(`[SAVE] Salvando dados para ${contactId}:`, dataToSave);
+
+            try {
+                const response = await fetch(`/api/contacts/${contactId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataToSave)
+                });
+                const updatedContact = await response.json();
+
+                state.allContacts[contactId] = updatedContact;
+                
+                const li = conversationList.querySelector(`[data-contact-id="${contactId}"] .font-semibold`);
+                if (li) li.textContent = updatedContact.profile.name || contactId;
+                
+                if (state.activeConversationId === contactId) {
+                    document.getElementById('contact-name').textContent = updatedContact.profile.name || contactId;
+                }
+
+            } catch (error) {
+                console.error("Erro ao salvar dados do contato:", error);
+            }
+        }
+    });
+
+
+    applyTheme(savedTheme);
+
+    initializeEmojiPicker({
+        inputField: messageInput,
+        pickerContainer: emojiPickerContainer
+    });
+
+    let quickRepliesComponent = initializeQuickReplies({
+        pickerContainer: quickReplyPicker,
+        searchInput: document.getElementById('quick-reply-search'),
+        addButton: document.getElementById('add-quick-reply-btn'),
+        listContainer: document.getElementById('quick-reply-list'),
+        modal: quickReplyModal,
+        onSend: (replyData) => {
+            sendMessageFast({
+                text: replyData.text,
+                imageUrl: replyData.imageUrl,
+                templateName: replyData.templateName
+            });
+        }
+    });
+    
+    PanelManager.register(emojiPickerContainer);
+    PanelManager.register(quickReplyPicker);
+
+    quickReplyButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        contactInfoPanel.hide();
+        quickRepliesComponent.load();
+        PanelManager.open(quickReplyPicker);
+    });
+
+    emojiButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        contactInfoPanel.hide();
+        PanelManager.open(emojiPickerContainer);
+    });
+
+    searchInput.addEventListener('input', (e) => {
+        state.searchTerm = e.target.value;
+        renderConversationList();
+    });
+
+    filterBtnAll.addEventListener('click', () => {
+        state.currentFilter = 'all';
+        filterBtnAll.classList.add('active');
+        filterBtnUnread.classList.remove('active');
+        renderConversationList();
+    });
+
+    filterBtnUnread.addEventListener('click', () => {
+        state.currentFilter = 'unread';
+        filterBtnUnread.classList.add('active');
+        filterBtnAll.classList.remove('active');
+        renderConversationList();
+    });
+
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    templateManagerBtn.addEventListener('click', () => {
+        window.location.href = '/templates.html';
+    });
+
+
+    themeToggleButton.addEventListener('click', toggleTheme);
 
     document.addEventListener('click', (e) => {
-        
         const target = e.target;
-
         const infoPanel = document.getElementById('contact-info-panel');
         const chatHeaderTrigger = document.getElementById('chat-header');
 
@@ -491,102 +508,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.closest('.picker-panel, .composer-button')) {
              PanelManager.closeAll();
         }
-    });
-
-    async function sendMessageFast(messageData = null) {
-        
-        if (!state.activeConversationId) {
-            console.error("[SEND] Erro: Nenhuma conversa ativa selecionada.");
-            alert("Selecione uma conversa para enviar!");
-            return;
-        }
-
-        let payload;
-
-        if (messageData) {
-            if (!state.activeConversationId) return;
-            payload = {
-                to: state.activeConversationId,
-                text: messageData.text || '',
-                imageUrl: messageData.imageUrl || '',
-                templateName: messageData.templateName || ''
-            };
-        } else {
-            const text = messageInput.value.trim();
-            if (!text || !state.activeConversationId) return;
-            payload = { to: state.activeConversationId, text: text };
-        }
-        
-        console.log('[sendMessage] Enviando payload para o backend:', payload);
-
-        try {
-            const response = await fetch('/api/send', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                throw new Error('Falha na API de envio.');
-            }
-
-            if (!messageData) {
-                messageInput.value = '';
-            }
-
-            // renderConversationList();
-
-            if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
-                // renderMessagesFor(state.activeConversationId, false);
-                renderActiveChat();
-            }
-
-        } catch (error) {
-            console.error('Erro ao enviar mensagem:', error);
-        }
-    }
-
-    async function sendMessage() {
-
-        if (!state.activeConversationId) {
-            console.error("[SEND] Erro: Nenhuma conversa ativa selecionada.");
-            alert("Selecione uma conversa para enviar!");
-            return;
-        }
-
-        const text = messageInput.value.trim();
-        if (!text || !state.activeConversationId)
-            return;
-        await fetch('/api/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                to: state.activeConversationId,
-                text: text
-            })
-        });
-        messageInput.value = '';
-
-        // renderConversationList();
-    
-        if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
-            // renderMessagesFor(state.activeConversationId, false);
-            renderActiveChat();
-        }
-    }
-
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    templateManagerBtn.addEventListener('click', () => {
-        window.location.href = '/templates.html';
     });
 
     setInterval(fetchAllData, 3000);
