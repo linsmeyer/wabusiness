@@ -19,15 +19,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterBtnUnread = document.getElementById('filter-btn-unread');
     const templateManagerBtn = document.getElementById('template-manager-btn');
 
-    let allConversations = {};
-    let allContacts = {};
-    let activeConversationId = null;
-    let currentFilter = 'all';
-    let searchTerm = '';
+    // let allConversations = {};
+    // let allContacts = {};
+    // let state.activeConversationId = null;
+    // let currentFilter = 'all';
+    // let searchTerm = '';
 
-    let uiState = {
-        openDropdownContactId: null
+    const state = {
+        allConversations: {},
+        allContacts: {},
+        activeConversationId: null,
+        currentFilter: 'all',
+        searchTerm: '',
+        openDropdownContactId: null,
     };
+
+    const PanelManager = {
+        panels: [],
+        register: function(panelElement) { this.panels.push(panelElement); },
+        open: function(panelToOpen) {
+            this.panels.forEach(panel => {
+                panel.classList.toggle('hidden', panel !== panelToOpen || !panel.classList.contains('hidden'));
+            });
+        },
+        closeAll: function() { this.panels.forEach(panel => panel.classList.add('hidden')); }
+    };
+
 
     conversationList.addEventListener('click', (e) => {
         const actionTarget = e.target.closest('[data-action]');
@@ -41,16 +58,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         switch (action) {
             case 'select-convo':
-                if (uiState.openDropdownContactId) {
-                    uiState.openDropdownContactId = null;
+                if (state.openDropdownContactId) {
+                    state.openDropdownContactId = null;
                 }
                 selectConversation(contactId, false);
                 break;
             case 'toggle-dropdown':
-                uiState.openDropdownContactId = (uiState.openDropdownContactId === contactId) ? null : contactId;
+                state.openDropdownContactId = (state.openDropdownContactId === contactId) ? null : contactId;
                 break;
             case 'mark-unread':
-                uiState.openDropdownContactId = null;
+                state.openDropdownContactId = null;
                 markConversationAsUnread(contactId);
                 break;
         }
@@ -61,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function markConversationAsUnread(contactId) {
         console.log(`Marcando conversa ${contactId} como não lida...`);
         
-        uiState.openDropdownContactId = null; 
+        state.openDropdownContactId = null; 
 
         try {
             await fetch(`/api/conversations/${contactId}/mark-as-unread`, { method: 'POST' });
@@ -73,19 +90,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     searchInput.addEventListener('input', (e) => {
-        searchTerm = e.target.value;
+        state.searchTerm = e.target.value;
         renderConversationList();
     });
 
     filterBtnAll.addEventListener('click', () => {
-        currentFilter = 'all';
+        state.currentFilter = 'all';
         filterBtnAll.classList.add('active');
         filterBtnUnread.classList.remove('active');
         renderConversationList();
     });
 
     filterBtnUnread.addEventListener('click', () => {
-        currentFilter = 'unread';
+        state.currentFilter = 'unread';
         filterBtnUnread.classList.add('active');
         filterBtnAll.classList.remove('active');
         renderConversationList();
@@ -135,12 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 const updatedContact = await response.json();
 
-                allContacts[contactId] = updatedContact;
+                state.allContacts[contactId] = updatedContact;
                 
                 const li = conversationList.querySelector(`[data-contact-id="${contactId}"] .font-semibold`);
                 if (li) li.textContent = updatedContact.profile.name || contactId;
                 
-                if (activeConversationId === contactId) {
+                if (state.activeConversationId === contactId) {
                     document.getElementById('contact-name').textContent = updatedContact.profile.name || contactId;
                 }
 
@@ -178,41 +195,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
 
-    const PanelManager = {
-        panels: [],
-        register: function(panelElement) { this.panels.push(panelElement); },
-        open: function(panelToOpen) {
-            this.panels.forEach(panel => {
-                panel.classList.toggle('hidden', panel !== panelToOpen || !panel.classList.contains('hidden'));
-            });
-        },
-        closeAll: function() { this.panels.forEach(panel => panel.classList.add('hidden')); }
-    };
-
-    const state = {
-        allConversations: {},
-        allContacts: {},
-        activeConversationId: null,
-        currentFilter: 'all',
-        searchTerm: '',
-        openDropdownContactId: null,
-    };
-
-
     function renderConversationList() {
 
         console.log("[UI] Filtra e renderiza a lista de conversas applyFiltersAndRender...");
 
-        let conversationsToRender = Object.values(allConversations);
+        let conversationsToRender = Object.values(state.allConversations);
 
-        if (currentFilter === 'unread') {
+        if (state.currentFilter === 'unread') {
             conversationsToRender = conversationsToRender.filter(c => c.unreadCount > 0);
         }
 
-        if (searchTerm) {
-            const lowerCaseSearch = searchTerm.toLowerCase();
+        if (state.searchTerm) {
+            const lowerCaseSearch = state.searchTerm.toLowerCase();
             conversationsToRender = conversationsToRender.filter(c => {
-                const contactDetails = allContacts[c.contact];
+                const contactDetails = state.allContacts[c.contact];
                 const displayName = contactDetails?.profile?.name || c.contact;
                 return displayName.toLowerCase().includes(lowerCaseSearch);
             }
@@ -222,13 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
         conversationList.innerHTML = '';
         conversationsToRender.forEach(convo => {
             const contactId = convo.contact;
-            const contactDetails = allContacts[contactId];
+            const contactDetails = state.allContacts[contactId];
             const displayName = contactDetails?.profile?.name || contactId;
             const lastMessage = convo.messages.slice(-1)[0] || {};
             const li = document.createElement('li');
             const timestamp = lastMessage.timestamp ? new Date(lastMessage.timestamp * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
             
-            const isActiveClass = contactId === activeConversationId ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
+            const isActiveClass = contactId === state.activeConversationId ? 'bg-gray-200 dark:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
             li.className = `group conversation-item ${isActiveClass}`;
             li.dataset.contactId = contactId;
             li.innerHTML = `
@@ -257,8 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
             conversationList.appendChild(li); 
         });
 
-        if (uiState.openDropdownContactId) {
-            const activeLi = conversationList.querySelector(`[data-contact-id="${uiState.openDropdownContactId}"]`);
+        if (state.openDropdownContactId) {
+            const activeLi = conversationList.querySelector(`[data-contact-id="${state.openDropdownContactId}"]`);
             if (activeLi) {
                 activeLi.querySelector('[data-role="dropdown-menu"]')?.classList.remove('hidden');
                 activeLi.querySelector('[data-action="toggle-dropdown"]')?.classList.add('active');
@@ -270,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * Renderiza o painel de chat para a conversa ativa.
      */
     function renderActiveChat() {
-        if (!activeConversationId) {
+        if (!state.activeConversationId) {
             chatHeader.classList.add('hidden');
             chatComposer.classList.add('hidden');
             return;
@@ -279,12 +275,12 @@ document.addEventListener('DOMContentLoaded', () => {
         chatHeader.classList.remove('hidden');
         chatComposer.classList.remove('hidden');
 
-        const contactId = activeConversationId;
-        const contactDetails = allContacts[contactId];
+        const contactId = state.activeConversationId;
+        const contactDetails = state.allContacts[contactId];
         contactName.textContent = contactDetails?.profile?.name || contactId;
         
         messageList.innerHTML = '';
-        const conversation = allConversations[contactId];
+        const conversation = state.allConversations[contactId];
         if (conversation) {
             conversation.messages.forEach(msg => {
                 const wrapper = document.createElement('div');
@@ -297,9 +293,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function renderMessagesFor(contactId, isUpdate = false) {
-        const conversation = allConversations[contactId];
+        const conversation = state.allConversations[contactId];
 
-        const contactDetails = allContacts[contactId];
+        const contactDetails = state.allContacts[contactId];
         if (contactDetails) {
             contactInfoPanel.render(contactDetails);
         }
@@ -342,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchAllData() {
 
-        const openMenuContactIdBeforeFetch = uiState.openDropdownContactId;
+        const openMenuContactIdBeforeFetch = state.openDropdownContactId;
 
         if (openMenuContactIdBeforeFetch) {
             const newLi = conversationList.querySelector(`[data-contact-id="${openMenuContactIdBeforeFetch}"]`);
@@ -352,10 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (menuToReopen && buttonToReactivate) {
                     menuToReopen.classList.remove('hidden');
                     buttonToReactivate.classList.add('active');
-                    uiState.openDropdownContactId = openMenuContactIdBeforeFetch;
+                    state.openDropdownContactId = openMenuContactIdBeforeFetch;
                 }
             } else {
-                uiState.openDropdownContactId = null;
+                state.openDropdownContactId = null;
             }
         }
 
@@ -367,17 +363,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const newConversations = await convosRes.json();
             const newContacts = await contactsRes.json();
 
-            const hasChanged = JSON.stringify(allConversations) !== JSON.stringify(newConversations) ||
-                               JSON.stringify(allContacts) !== JSON.stringify(newContacts);
+            const hasChanged = JSON.stringify(state.allConversations) !== JSON.stringify(newConversations) ||
+                               JSON.stringify(state.allContacts) !== JSON.stringify(newContacts);
 
             if (hasChanged) {
                 console.log("[DATA] Dados atualizados, renderizando UI");
-                allConversations = newConversations;
-                allContacts = newContacts;                
+                state.allConversations = newConversations;
+                state.allContacts = newContacts;                
                 // renderConversationList();
                 renderConversationList();
-                if (activeConversationId && allConversations[activeConversationId]) {
-                    // renderMessagesFor(activeConversationId, true);
+                if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
+                    // renderMessagesFor(state.activeConversationId, true);
                     renderActiveChat();
                 }
             }
@@ -388,16 +384,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     async function selectConversation(contactId) {
-        if (activeConversationId === contactId) return;
+        if (state.activeConversationId === contactId) return;
         
-        activeConversationId = contactId;
-        uiState.openDropdownContactId = null;
+        state.activeConversationId = contactId;
+        state.openDropdownContactId = null;
 
         // renderConversationList();
         
         chatHeader.classList.remove('hidden');
 
-        const contactDetails = allContacts[contactId];
+        const contactDetails = state.allContacts[contactId];
         const displayName = contactDetails?.profile?.name || contactId;
         
         contactName.textContent = displayName;
@@ -418,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // renderMessagesFor(contactId);
         renderActiveChat();
         
-        if (allConversations[contactId]?.unreadCount > 0) {
+        if (state.allConversations[contactId]?.unreadCount > 0) {
             console.log(`Marcando conversa ${contactId} como lida...`);
             await fetch(`/api/conversations/${contactId}/mark-as-read`, { method: 'POST' });
             await fetchAll();
@@ -468,8 +464,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!e.target.closest('.conversation-item')) {
-            if (uiState.openDropdownContactId) {
-                uiState.openDropdownContactId = null;
+            if (state.openDropdownContactId) {
+                state.openDropdownContactId = null;
             }
             closeAllDropdowns();
         }
@@ -481,7 +477,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sendMessageFast(messageData = null) {
         
-        if (!activeConversationId) {
+        if (!state.activeConversationId) {
             console.error("[SEND] Erro: Nenhuma conversa ativa selecionada.");
             alert("Selecione uma conversa para enviar!");
             return;
@@ -490,17 +486,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let payload;
 
         if (messageData) {
-            if (!activeConversationId) return;
+            if (!state.activeConversationId) return;
             payload = {
-                to: activeConversationId,
+                to: state.activeConversationId,
                 text: messageData.text || '',
                 imageUrl: messageData.imageUrl || '',
                 templateName: messageData.templateName || ''
             };
         } else {
             const text = messageInput.value.trim();
-            if (!text || !activeConversationId) return;
-            payload = { to: activeConversationId, text: text };
+            if (!text || !state.activeConversationId) return;
+            payload = { to: state.activeConversationId, text: text };
         }
         
         console.log('[sendMessage] Enviando payload para o backend:', payload);
@@ -522,8 +518,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // renderConversationList();
 
-            if (activeConversationId && allConversations[activeConversationId]) {
-                // renderMessagesFor(activeConversationId, false);
+            if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
+                // renderMessagesFor(state.activeConversationId, false);
                 renderActiveChat();
             }
 
@@ -534,14 +530,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function sendMessage() {
 
-        if (!activeConversationId) {
+        if (!state.activeConversationId) {
             console.error("[SEND] Erro: Nenhuma conversa ativa selecionada.");
             alert("Selecione uma conversa para enviar!");
             return;
         }
 
         const text = messageInput.value.trim();
-        if (!text || !activeConversationId)
+        if (!text || !state.activeConversationId)
             return;
         await fetch('/api/send', {
             method: 'POST',
@@ -549,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                to: activeConversationId,
+                to: state.activeConversationId,
                 text: text
             })
         });
@@ -557,8 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // renderConversationList();
     
-        if (activeConversationId && allConversations[activeConversationId]) {
-            // renderMessagesFor(activeConversationId, false);
+        if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
+            // renderMessagesFor(state.activeConversationId, false);
             renderActiveChat();
         }
     }
