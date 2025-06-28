@@ -45,7 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAll: function() { this.panels.forEach(panel => panel.classList.add('hidden')); }
     };
 
+    /*
+    conversationList.addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        
+        e.stopPropagation();
+        const contactId = e.target.closest('.conversation-item').dataset.contactId;
 
+        if (target.dataset.action === 'select-convo') handleConversationSelect(contactId);
+        if (target.dataset.action === 'toggle-dropdown') handleDropdownToggle(contactId);
+        if (target.dataset.action === 'mark-unread') {
+            state.openDropdownContactId = null;
+            markConversationAsUnread(contactId);
+        }
+    });
+    */
+    
     conversationList.addEventListener('click', (e) => {
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
@@ -61,33 +77,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (state.openDropdownContactId) {
                     state.openDropdownContactId = null;
                 }
-                selectConversation(contactId, false);
+                handleConversationSelect(contactId);
                 break;
             case 'toggle-dropdown':
-                state.openDropdownContactId = (state.openDropdownContactId === contactId) ? null : contactId;
+                handleDropdownToggle(contactId);
                 break;
             case 'mark-unread':
                 state.openDropdownContactId = null;
                 markConversationAsUnread(contactId);
                 break;
         }
-
-        renderConversationList();
     });
+    
 
     async function markConversationAsUnread(contactId) {
-        console.log(`Marcando conversa ${contactId} como não lida...`);
-        
-        state.openDropdownContactId = null; 
-
         try {
             await fetch(`/api/conversations/${contactId}/mark-as-unread`, { method: 'POST' });
-            await fetchAll();
+            await fetchAllData();
 
         } catch (error) {
             console.error("Erro ao marcar como não lida:", error);
         }
     }
+
+    async function markConversationAsRead(contactId) {
+        console.log(`Marcando conversa ${contactId} como lida...`);
+        try {
+            await fetch(`/api/conversations/${contactId}/mark-as-read`, { method: 'POST' });
+            await fetchAllData();
+
+        } catch (error) {
+            console.error("Erro ao marcar como não lida:", error);
+        }
+    }
+
 
     searchInput.addEventListener('input', (e) => {
         state.searchTerm = e.target.value;
@@ -291,33 +314,28 @@ document.addEventListener('DOMContentLoaded', () => {
             messageList.scrollTop = messageList.scrollHeight;
         }
     }
-    
-    function renderMessagesFor(contactId, isUpdate = false) {
-        const conversation = state.allConversations[contactId];
-
-        const contactDetails = state.allContacts[contactId];
-        if (contactDetails) {
-            contactInfoPanel.render(contactDetails);
-        }
-
-        messageList.innerHTML = ''; 
-
-        if (!conversation) return;
-        conversation.messages.forEach(msg => {
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble ${msg.direction}`;
-            bubble.textContent = msg.text;
-            messageList.appendChild(bubble);
-        });
-        
-        if (!isUpdate) {
-            messageList.scrollTop = messageList.scrollHeight;
-        }
-    }
 
     function renderAll() {
         renderConversationList();
         renderActiveChat();
+    }
+
+    function handleConversationSelect(contactId) {
+        if (state.activeConversationId === contactId) return;
+        
+        state.activeConversationId = contactId;
+        state.openDropdownContactId = null; 
+
+        renderAll();
+
+        if (state.allConversations[contactId]?.unreadCount > 0) {
+            markConversationAsRead(contactId);
+        }
+    }
+
+    function handleDropdownToggle(contactId) {
+        state.openDropdownContactId = (state.openDropdownContactId === contactId) ? null : contactId;
+        renderConversationList();
     }
 
     /* sugerido
