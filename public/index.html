@@ -110,14 +110,14 @@
 
             /* O menu que aparece */
             .dropdown-menu {
-            @apply absolute top-10 right-4 w-48 shadow-xl rounded-md py-1 z-20 hidden;
-            
-            /* CORREÇÃO: Aplica o fundo e a borda */
-            @apply bg-white border border-white; /* Fundo branco e borda branca de 1px */
-            
-            /* CORREÇÃO PARA O MODO DARK */
-            @apply dark:bg-gray-800 dark:border-gray-700;
-        }
+                @apply absolute top-10 right-4 w-48 shadow-xl rounded-md py-1 z-20 hidden;
+                
+                /* CORREÇÃO: Aplica o fundo e a borda */
+                @apply bg-white border border-white; /* Fundo branco e borda branca de 1px */
+                
+                /* CORREÇÃO PARA O MODO DARK */
+                @apply dark:bg-gray-800 dark:border-gray-700;
+            }
 
             /* Mostra o menu quando o botão tem a classe 'active' */
             .dropdown-button.active + .dropdown-menu {
@@ -140,6 +140,18 @@
             .dropdown-item:hover {
                 background-color: var(--bg-hover);
             }
+            
+            #template-manager-btn .hover-icon {
+                display: none; /* O ícone de hover começa escondido */
+            }
+
+            #template-manager-btn:hover .default-icon {
+                display: none; /* Esconde o ícone padrão quando o mouse está sobre o botão */
+            }
+
+            #template-manager-btn:hover .hover-icon {
+                display: block; /* Mostra o ícone de hover quando o mouse está sobre o botão */
+            }
         </style>
 
     </head>
@@ -158,9 +170,16 @@
                 </div>
                 <div class="nav-bottom">
                     <!-- NOVO: Botão para ir para a página de Templates -->
-                    <a href="/templates.html" class="theme-toggle" title="Gerenciar Templates">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </a>
+                    <button id="template-manager-btn" class="theme-toggle" title="Gerenciar Templates">
+                        <!-- Ícone Padrão (contorno) -->
+                        <span class="default-icon">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </span>
+                        <!-- Ícone Hover (preenchido) -->
+                        <span class="hover-icon">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        </span>
+                    </button>
                     <button id="theme-toggle-btn" class="theme-toggle" title="Mudar para modo escuro">
                         <span id="theme-icon-sun" class="theme-icon hidden">
                             <svg viewBox="0 0 24 24" width="24" height="24">

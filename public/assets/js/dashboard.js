@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('conversation-search');
     const filterBtnAll = document.getElementById('filter-btn-all');
     const filterBtnUnread = document.getElementById('filter-btn-unread');
+    const templateManagerBtn = document.getElementById('template-manager-btn');
+    
     // ... (outros elementos do DOM que você já tem)
 
     // --- ESTADO GLOBAL ---
@@ -173,8 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchTerm = e.target.value;
         applyFiltersAndRender();
         // Apenas muda o estado e re-renderiza
-    }
-    );
+   });
 
     filterBtnAll.addEventListener('click', () => {
         currentFilter = 'all';
@@ -182,8 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterBtnUnread.classList.remove('active');
         applyFiltersAndRender();
         // Apenas muda o estado e re-renderiza
-    }
-    );
+   });
 
     filterBtnUnread.addEventListener('click', () => {
         currentFilter = 'unread';
@@ -191,8 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterBtnAll.classList.remove('active');
         applyFiltersAndRender();
         // Apenas muda o estado e re-renderiza
-    }
-    );
+   });
 
     // =======================================================================
     // == LÓGICA DE GERENCIAMENTO DE TEMA                                   ==
@@ -534,8 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         event.stopPropagation();
         // Impede que o clique se propague para o document
         PanelManager.open(emojiPickerContainer);
-    }
-    );
+   });
 
 
     // 3. Adiciona um listener global para fechar todos os painéis ao clicar fora
@@ -569,8 +567,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!e.target.closest('.picker-panel, .composer-button')) {
              PanelManager.closeAll();
         }
-    }
-    );
+   });
 
 
 
@@ -676,8 +673,11 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             sendMessage();
         }
-    }
-    );
+    });
+    
+    templateManagerBtn.addEventListener('click', () => {
+        window.location.href = '/templates.html'; // Navega para a página de templates
+    });
 
     // startPolling();
     setInterval(fetchAll, 3000);

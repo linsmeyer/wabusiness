@@ -137,8 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             option.value = name;
             option.textContent = name;
             elements.savedTemplateSelector.appendChild(option);
-        }
-        );
+        });
     }
 
     // Constrói um objeto de estado completo para salvar
@@ -167,14 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.value = item.querySelector('.button-value-input').value;
             }
             state.buttons.push(button);
-        }
-        );
+        });
 
         document.querySelectorAll('.variable-editor-item input').forEach(input => {
             const id = input.id.replace('variable-example-', '');
             state.variableExamples[id] = input.value;
-        }
-        );
+        });
 
         return state;
     }
@@ -215,8 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = document.getElementById(`variable-example-${key}`);
             if (input)
                 input.value = state.variableExamples[key];
-        }
-        );
+        });
 
         syncAll();
         // Sincroniza novamente para refletir os exemplos no preview
@@ -399,8 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
             option.value = name;
             option.textContent = name;
             elements.savedTemplateSelector.appendChild(option);
-        }
-        );
+        });
     }
 
     // Constrói um objeto de estado completo para salvar
@@ -429,14 +424,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 button.value = item.querySelector('.button-value-input').value;
             }
             state.buttons.push(button);
-        }
-        );
+        });
 
         document.querySelectorAll('.variable-editor-item input').forEach(input => {
             const id = input.id.replace('variable-example-', '');
             state.variableExamples[id] = input.value;
-        }
-        );
+        });
 
         return state;
     }
@@ -478,8 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const input = document.getElementById(`variable-example-${key}`);
             if (input)
                 input.value = state.variableExamples[key];
-        }
-        );
+        });
 
         toggleHeaderControls(); 
 
@@ -503,8 +495,7 @@ document.addEventListener('DOMContentLoaded', () => {
         item.querySelector('.remove-btn').addEventListener('click', () => {
             item.remove();
             syncAll();
-        }
-        );
+        });
         elements.buttonsEditor.appendChild(item);
         item.querySelectorAll('input').forEach(input => input.addEventListener('input', syncAll));
     }
@@ -571,8 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert('Máximo de 3 botões.');
         }
-    }
-    );
+    });
 
     elements.addCtaBtn.addEventListener('click', () => {
         if (elements.buttonsEditor.childElementCount < 3) {
@@ -586,8 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert('Máximo de 3 botões.');
         }
-    }
-    );
+    });
 
 
     elements.renderFromJsonBtn.addEventListener('click', () => {
@@ -598,8 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('JSON inválido!');
             console.error(error);
         }
-    }
-    );
+    });
 
     populateSavedTemplatesDropdown();
     loadFromPayload(templateExamples.marketing_promo);

@@ -26,5 +26,12 @@
     },
     "wa_id": "5511999991113",
     "observations": "Teste de observações"
+  },
+  "5511999991114": {
+    "profile": {
+      "name": "Novo Contato 2"
+    },
+    "wa_id": "5511999991114",
+    "observations": "ok"
   }
 }
