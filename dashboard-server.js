@@ -1,4 +1,4 @@
-// unified-server.js
+// dashboard-server.js
 
 /* INFORMAÇÕES DA ARQUITETURA DO PROJETO
 
