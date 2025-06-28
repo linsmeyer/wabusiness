@@ -1,41 +1,25 @@
-timestamp,from,type,content,message_id,direction
-1678886400,5511987654321,text,"Olá, gostaria de mais informações!",wamid.123,in
-1678886520,5511987654321,text,"Claro! Em que posso ajudar? Esta é uma resposta simulada.",wamid.456,out
-1678887000,5521912345678,text,"Qual o horário de funcionamento?",wamid.789,in
-1750701400,5511987654321,text,"teste",wamid.simulated.1750701400843,out
-1750701422,5511987654321,text,"OK",wamid.simulated.1750701422076,out
-1750701479,5521912345678,text,"das 9h as 18h",wamid.simulated.1750701479912,out
-1750701542,5511987654321,text,"ok",wamid.simulated.1750701542643,out
-1750703689,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750703689293,in
-1750703689,5511999991111,text,"Nosso horário de funcionamento é de Segunda a Sexta, das 9h às 18h. Nosso endereço é Rua das Flores, 123.",wamid.simulated.1750703689297,out
-1750721607,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750721607134,in
-1750721607,5511999991111,text,"Nosso horário de funcionamento é de Segunda a Sexta, das 9h às 18h. Nosso endereço é Rua das Flores, 123.",wamid.simulated.1750721607139,out
-1750721678,5511999991111,text,"teste",wamid.simulated.1750721678121,out
-1750721687,5511987654321,text,"teste",wamid.simulated.1750721687037,out
-1750721692,5521912345678,text,"teste",wamid.simulated.1750721692079,out
-1750721707,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750721707449,in
-1750721707,5511999991111,text,"Nosso horário de funcionamento é de Segunda a Sexta, das 9h às 18h. Nosso endereço é Rua das Flores, 123.",wamid.simulated.1750721707453,out
-1750721709,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750721709316,in
-1750721709,5511999991111,text,"Nosso horário de funcionamento é de Segunda a Sexta, das 9h às 18h. Nosso endereço é Rua das Flores, 123.",wamid.simulated.1750721709318,out
-1750721710,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750721710508,in
-1750721710,5511999991111,text,"Nosso horário de funcionamento é de Segunda a Sexta, das 9h às 18h. Nosso endereço é Rua das Flores, 123.",wamid.simulated.1750721710511,out
-1750721711,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750721711927,in
-1750721711,5511999991111,text,"Nosso horário de funcionamento é de Segunda a Sexta, das 9h às 18h. Nosso endereço é Rua das Flores, 123.",wamid.simulated.1750721711929,out
-1750727380,5511999991111,text,"😜",wamid.simulated.1750727380260,out
-1750730333,5511999991111,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1750730333588,out
-1750730395,5511999991111,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1750730395423,out
-1750730423,5511999991111,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1750730423379,out
-1750730997,5511999991111,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1750730997787,out
-1750731002,5511999991111,text,"🥰",wamid.simulated.1750731002187,out
-1750731006,5511999991111,text,"okokokok",wamid.simulated.1750731006611,out
-1750731037,5521912345678,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1750731037461,out
-1750731039,5521912345678,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1750731039511,out
-1750734555,5511987654321,text,"😜",wamid.simulated.1750734555617,out
-1750734567,5521912345678,text,"😜",wamid.simulated.1750734567401,out
-1750736109,5511999991111,text,"🥰",wamid.simulated.1750736109972,out
-1750736118,5511999991111,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1750736118227,out
-1750736126,5511999991111,text,"olá",wamid.simulated.1750736126018,in
-1750736126,5511999991111,text,"Olá! 👋 Bem-vindo(a) ao nosso atendimento. Como podemos ajudar?",wamid.simulated.1750736126025,out
-1750739582,5521912345678,text,"OKOKOK",wamid.simulated.1750739582575,out
-1751052631,5511987654321,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751052631441,out
-1751052672,5511987654321,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1751052672880,out
+timestamp,from,type,content,message_id,direction,is_read
+1678886400,5511987654321,text,"Olá, gostaria de mais informações!",wamid.123,in,false
+1678886520,5511987654321,text,"Claro! Em que posso ajudar? Esta é uma resposta simulada.",wamid.456,out,true
+1678887000,5521912345678,text,"Qual o horário de funcionamento?",wamid.789,in,true
+1750701400,5511987654321,text,"teste",wamid.simulated.1750701400843,out,true
+1750701422,5511987654321,text,"OK",wamid.simulated.1750701422076,out,true
+1750701479,5521912345678,text,"das 9h as 18h",wamid.simulated.1750701479912,out,true
+1750701542,5511987654321,text,"ok",wamid.simulated.1750701542643,out,true
+1750703689,5511999991111,text,"qual o endereço de vocês?",wamid.simulated.1750703689293,in,true
+1750999995,5511987654321,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1750999995823,out,true
+1751000001,5511987654321,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751000001692,out,true
+1751000018,5511999991111,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751000018616,out,true
+1751006365,5511987654321,text,"Olá! Bem-vindo(a) ao nosso atendimento. Como podemos te ajudar hoje? 😊",wamid.simulated.1751006365387,out,true
+1751043236,5511999991111,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751043236766,out,true
+1751044464,5511987654321,text,"🤣",wamid.simulated.1751044464970,out,true
+1751044748,5521912345678,text,"😀",wamid.simulated.1751044748303,out,true
+1751044756,5521912345678,text,"😇",wamid.simulated.1751044756797,out,true
+1751044765,5521912345678,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751044765329,out,true
+1751046610,5511987654321,text,"😇",wamid.simulated.1751046610339,out,true
+1751046615,5511987654321,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751046615751,out,true
+1751046731,5511999991113,text,"ola",wamid.simulated.1751046731203,in,true
+1751046731,5511999991113,text,"Desculpe, não entendi sua pergunta. Um de nossos atendentes irá te ajudar em breve.",wamid.simulated.1751046731217,out,true
+1751071246,5511999991113,text,"ola",wamid.simulated.1751071246901,in,true
+1751071246,5511999991113,text,"Desculpe, não entendi sua pergunta. Um de nossos atendentes irá te ajudar em breve.",wamid.simulated.1751071246913,out,true
+1751071263,5511999991113,text,"Nosso horário é das 9h às 18h. O endereço é Rua das Flores, 123.",wamid.simulated.1751071263271,out,true

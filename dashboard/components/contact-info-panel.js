@@ -1,7 +1,7 @@
 // public/components/contact-info-panel.js
 
 function initializeContactInfoPanel(options) {
-    const { panel, header, closeButton, body, onSaveObservations } = options;
+    const { panel, header, closeButton, onSave } = options;
 
     let currentContactId = null;
     let saveTimeout = null;
@@ -12,31 +12,46 @@ function initializeContactInfoPanel(options) {
         panel.classList.toggle('hidden', !visible);
     }
 
+    const savePanelData = () => {
+        if (!currentContactId) return;
+
+        const nameInput = panel.querySelector('#contact-name-input');
+        const observationsInput = panel.querySelector('#observations-textarea');
+
+        // Cria o objeto com os novos dados
+        const dataToSave = {
+            name: nameInput.value,
+            observations: observationsInput.value
+        };
+
+        // Chama o callback de salvamento, passando o ID e os dados
+        onSave(currentContactId, dataToSave);
+    };
+
     // Renderiza os dados do contato no painel
     function render(contactData) {
         currentContactId = contactData.wa_id;
+        const body = panel.querySelector('.info-panel-body');
         body.innerHTML = `
-            <div class="info-group">
+        <div class="info-group">
                 <strong>Nome do Contato</strong>
-                <span>${contactData.profile.name || 'Não fornecido'}</span>
+                <input type="text" id="contact-name-input" class="info-input" value="${contactData.profile.name || 'Não fornecido'}" placeholder="Adicionar nome...">
             </div>
             <div class="info-group">
                 <strong>Número (WA ID)</strong>
-                <span>${contactData.wa_id}</span>
+                <span class="text-gray-500">${contactData.wa_id}</span>
             </div>
             <div class="info-group">
                 <strong>Observações</strong>
-                <textarea id="observations-textarea">${contactData.observations || ''}</textarea>
+                <textarea id="observations-textarea" class="info-textarea" placeholder="Adicionar observação...">${contactData.observations || ''}</textarea>
             </div>
         `;
 
-        const textarea = body.querySelector('#observations-textarea');
-        textarea.addEventListener('input', () => {
-            // Usa um debounce para não salvar a cada tecla pressionada
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(() => {
-                onSaveObservations(currentContactId, textarea.value);
-            }, 1000); // Salva 1 segundo após o usuário parar de digitar
+        body.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', () => {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(savePanelData, 1000);
+            });
         });
     }
     
@@ -46,6 +61,7 @@ function initializeContactInfoPanel(options) {
             togglePanel(true);
         }
     });
+    
     closeButton.addEventListener('click', () => togglePanel(false));
     
     // Interface pública do componente

@@ -18,6 +18,13 @@
       "name": "Ana"
     },
     "wa_id": "5511999991111",
-    "observations": "Retornar contato sobre o endereço. ok"
+    "observations": "Retornar contato sobre o endereço."
+  },
+  "5511999991113": {
+    "profile": {
+      "name": "Novo Contato"
+    },
+    "wa_id": "5511999991113",
+    "observations": "Teste de observações"
   }
 }

@@ -1,7 +1,7 @@
 // public/components/emoji-picker.js
 
 function initializeEmojiPicker(options) {
-    const { triggerButton, inputField, pickerContainer } = options;
+    const { inputField, pickerContainer } = options;
 
     // Lista de emojis (pode ser expandida)
     const emojis = [
@@ -33,16 +33,4 @@ function initializeEmojiPicker(options) {
         pickerContainer.appendChild(button);
     });
 
-    // Mostra/esconde o painel ao clicar no botão gatilho
-    triggerButton.addEventListener('click', (event) => {
-        event.stopPropagation(); // Impede que o clique feche o painel imediatamente
-        pickerContainer.classList.toggle('hidden');
-    });
-
-    // Esconde o painel se clicar em qualquer outro lugar da página
-    document.addEventListener('click', (event) => {
-        if (!pickerContainer.contains(event.target) && event.target !== triggerButton) {
-            pickerContainer.classList.add('hidden');
-        }
-    });
 }

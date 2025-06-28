@@ -1,7 +1,7 @@
 // public/components/quick-replies.js
 
 function initializeQuickReplies(options) {
-    const { triggerButton, pickerContainer, searchInput, addButton, listContainer, modal, onSend } = options;
+    const { pickerContainer, searchInput, addButton, listContainer, modal, onSend } = options;
     
     let allReplies = [];
 
@@ -80,15 +80,6 @@ function initializeQuickReplies(options) {
         await fetchData(); // Recarrega os dados
     }
 
-    // --- Event Listeners ---
-    triggerButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        pickerContainer.classList.toggle('hidden');
-        if (!pickerContainer.classList.contains('hidden')) {
-            fetchData();
-        }
-    });
-
     searchInput.addEventListener('input', handleSearch);
     addButton.addEventListener('click', () => showModal());
     modal.querySelector('#cancel-modal-btn').addEventListener('click', () => modal.classList.add('hidden'));
@@ -107,11 +98,9 @@ function initializeQuickReplies(options) {
             pickerContainer.classList.add('hidden');
         }
     });
+    
+    return {
+        load: fetchData
+    };
 
-    // Fecha se clicar fora
-    document.addEventListener('click', (e) => {
-        if (!pickerContainer.contains(e.target) && e.target !== triggerButton) {
-            pickerContainer.classList.add('hidden');
-        }
-    });
 }
