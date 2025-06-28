@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentFilter = 'all';
     let searchTerm = '';
 
+    let uiState = {
+        openDropdownContactId: null
+    };
+
     conversationList.addEventListener('click', (e) => {
         const actionTarget = e.target.closest('[data-action]');
         if (!actionTarget) return;
@@ -51,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
         }
 
-        applyFiltersAndRender();
+        renderConversationList();
     });
 
     async function markConversationAsUnread(contactId) {
@@ -68,84 +72,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    async function selectConversation(contactId) {
-        if (activeConversationId === contactId) return;
-        
-        activeConversationId = contactId;
-        uiState.openDropdownContactId = null;
-
-        // applyFiltersAndRender();
-        
-        chatHeader.classList.remove('hidden');
-
-        const contactDetails = allContacts[contactId];
-        const displayName = contactDetails?.profile?.name || contactId;
-        
-        contactName.textContent = displayName;
-        chatComposer.classList.remove('hidden');
-        
-        if (contactDetails) {
-            contactInfoPanel.render(contactDetails);
-        } else {
-            contactInfoPanel.render({ wa_id: contactId, profile: {} });
-        }
-        
-        contactInfoPanel.hide();
-
-        document.querySelectorAll('.conversation-item').forEach(item => {
-            item.classList.toggle('active', item.dataset.contactId === contactId);
-        });
-        
-        renderMessagesFor(contactId);
-        
-        if (allConversations[contactId]?.unreadCount > 0) {
-            console.log(`Marcando conversa ${contactId} como lida...`);
-            await fetch(`/api/conversations/${contactId}/mark-as-read`, { method: 'POST' });
-            await fetchAll();
-        }
-    }
-    
-    function renderMessagesFor(contactId, isUpdate = false) {
-        const conversation = allConversations[contactId];
-
-        const contactDetails = allContacts[contactId];
-        if (contactDetails) {
-            contactInfoPanel.render(contactDetails);
-        }
-
-        messageList.innerHTML = ''; 
-
-        if (!conversation) return;
-        conversation.messages.forEach(msg => {
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble ${msg.direction}`;
-            bubble.textContent = msg.text;
-            messageList.appendChild(bubble);
-        });
-        
-        if (!isUpdate) {
-            messageList.scrollTop = messageList.scrollHeight;
-        }
-    }
-
     searchInput.addEventListener('input', (e) => {
         searchTerm = e.target.value;
-        applyFiltersAndRender();
+        renderConversationList();
     });
 
     filterBtnAll.addEventListener('click', () => {
         currentFilter = 'all';
         filterBtnAll.classList.add('active');
         filterBtnUnread.classList.remove('active');
-        applyFiltersAndRender();
+        renderConversationList();
     });
 
     filterBtnUnread.addEventListener('click', () => {
         currentFilter = 'unread';
         filterBtnUnread.classList.add('active');
         filterBtnAll.classList.remove('active');
-        applyFiltersAndRender();
+        renderConversationList();
     });
    
     function applyTheme(theme) {
@@ -234,9 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    let uiState = {
-        openDropdownContactId: null
-    };
 
     const PanelManager = {
         panels: [],
@@ -249,7 +189,17 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAll: function() { this.panels.forEach(panel => panel.classList.add('hidden')); }
     };
 
-    function applyFiltersAndRender() {
+    const state = {
+        allConversations: {},
+        allContacts: {},
+        activeConversationId: null,
+        currentFilter: 'all',
+        searchTerm: '',
+        openDropdownContactId: null,
+    };
+
+
+    function renderConversationList() {
 
         console.log("[UI] Filtra e renderiza a lista de conversas applyFiltersAndRender...");
 
@@ -316,20 +266,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const state = {
-        allConversations: {},
-        allContacts: {},
-        activeConversationId: null,
-        currentFilter: 'all',
-        searchTerm: '',
-        openDropdownContactId: null,
-    };
+    /**
+     * Renderiza o painel de chat para a conversa ativa.
+     */
+    function renderActiveChat() {
+        if (!activeConversationId) {
+            chatHeader.classList.add('hidden');
+            chatComposer.classList.add('hidden');
+            return;
+        }
+
+        chatHeader.classList.remove('hidden');
+        chatComposer.classList.remove('hidden');
+
+        const contactId = activeConversationId;
+        const contactDetails = allContacts[contactId];
+        contactName.textContent = contactDetails?.profile?.name || contactId;
+        
+        messageList.innerHTML = '';
+        const conversation = allConversations[contactId];
+        if (conversation) {
+            conversation.messages.forEach(msg => {
+                const wrapper = document.createElement('div');
+                wrapper.className = `flex mb-2 ${msg.direction === 'out' ? 'justify-end' : 'justify-start'}`;
+                wrapper.innerHTML = `<div class="rounded-lg p-3 max-w-lg ${msg.direction === 'out' ? 'bg-wa-green-light dark:bg-wa-green-dark' : 'bg-wa-panel-light dark:bg-wa-panel-dark'}">${msg.text}</div>`;
+                messageList.appendChild(wrapper);
+            });
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+    }
+    
+    function renderMessagesFor(contactId, isUpdate = false) {
+        const conversation = allConversations[contactId];
+
+        const contactDetails = allContacts[contactId];
+        if (contactDetails) {
+            contactInfoPanel.render(contactDetails);
+        }
+
+        messageList.innerHTML = ''; 
+
+        if (!conversation) return;
+        conversation.messages.forEach(msg => {
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${msg.direction}`;
+            bubble.textContent = msg.text;
+            messageList.appendChild(bubble);
+        });
+        
+        if (!isUpdate) {
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+    }
 
     function renderAll() {
-        applyFiltersAndRender();
+        renderConversationList();
         renderActiveChat();
     }
 
+    /* sugerido
     async function fetchAllData() {
         try {
             const [convosRes, contactsRes] = await Promise.all([
@@ -343,8 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Erro ao buscar dados:", error);
         }
     }
+    */
 
-    async function fetchAll() {
+    async function fetchAllData() {
 
         const openMenuContactIdBeforeFetch = uiState.openDropdownContactId;
 
@@ -375,19 +371,60 @@ document.addEventListener('DOMContentLoaded', () => {
                                JSON.stringify(allContacts) !== JSON.stringify(newContacts);
 
             if (hasChanged) {
-                console.log("[DATA] Dados atualizados, renderizando UI...");
+                console.log("[DATA] Dados atualizados, renderizando UI");
                 allConversations = newConversations;
                 allContacts = newContacts;                
-                // applyFiltersAndRender();
-                applyFiltersAndRender();
+                // renderConversationList();
+                renderConversationList();
                 if (activeConversationId && allConversations[activeConversationId]) {
-                    renderMessagesFor(activeConversationId, true);
+                    // renderMessagesFor(activeConversationId, true);
+                    renderActiveChat();
                 }
             }
         } catch (error) {
             console.error("Erro ao buscar dados:", error);
         }
     }
+
+
+    async function selectConversation(contactId) {
+        if (activeConversationId === contactId) return;
+        
+        activeConversationId = contactId;
+        uiState.openDropdownContactId = null;
+
+        // renderConversationList();
+        
+        chatHeader.classList.remove('hidden');
+
+        const contactDetails = allContacts[contactId];
+        const displayName = contactDetails?.profile?.name || contactId;
+        
+        contactName.textContent = displayName;
+        chatComposer.classList.remove('hidden');
+        
+        if (contactDetails) {
+            contactInfoPanel.render(contactDetails);
+        } else {
+            contactInfoPanel.render({ wa_id: contactId, profile: {} });
+        }
+        
+        contactInfoPanel.hide();
+
+        document.querySelectorAll('.conversation-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.contactId === contactId);
+        });
+        
+        // renderMessagesFor(contactId);
+        renderActiveChat();
+        
+        if (allConversations[contactId]?.unreadCount > 0) {
+            console.log(`Marcando conversa ${contactId} como lida...`);
+            await fetch(`/api/conversations/${contactId}/mark-as-read`, { method: 'POST' });
+            await fetchAll();
+        }
+    }
+
     
     PanelManager.register(quickReplyPicker);
 
@@ -483,10 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 messageInput.value = '';
             }
 
-            // applyFiltersAndRender();
+            // renderConversationList();
 
             if (activeConversationId && allConversations[activeConversationId]) {
-                renderMessagesFor(activeConversationId, false);
+                // renderMessagesFor(activeConversationId, false);
+                renderActiveChat();
             }
 
         } catch (error) {
@@ -517,10 +555,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         messageInput.value = '';
 
-        // applyFiltersAndRender();
+        // renderConversationList();
     
         if (activeConversationId && allConversations[activeConversationId]) {
-            renderMessagesFor(activeConversationId, false);
+            // renderMessagesFor(activeConversationId, false);
+            renderActiveChat();
         }
     }
 
@@ -536,7 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/templates.html';
     });
 
-    setInterval(fetchAll, 3000);
-    fetchAll();
+    setInterval(fetchAllData, 3000);
+    fetchAllData();
     
 });
