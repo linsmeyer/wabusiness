@@ -106,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 3. Atualiza o painel de chat
         chatHeader.classList.remove('hidden');
+        // chatComposer.classList.remove('hidden');
+        // contactName.textContent = allContacts[contactId]?.profile?.name || contactId;
 
         const contactDetails = allContacts[contactId];
         const displayName = contactDetails?.profile?.name || contactId;
