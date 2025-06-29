@@ -148,21 +148,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = messageInput.value.trim();
         if (!text || !state.activeConversationId)
             return;
-        await fetch('/api/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                to: state.activeConversationId,
-                text: text
-            })
-        });
-        messageInput.value = '';
-    
-        // Força uma atualização imediata da UI para feedback rápido.
-        if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
-            renderActiveChat();
+
+        try {
+            await fetch('/api/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to: state.activeConversationId,
+                    text: text
+                })
+            });
+            messageInput.value = '';
+        
+            if (state.activeConversationId && state.allConversations[state.activeConversationId]) {
+                // Força uma atualização imediata para o usuário ver a mensagem enviada
+                renderActiveChat();
+            }
+        } catch (error) {
+            console.error("Erro ao enviar mensagem:", error);
+            // Opcional: Mostrar um alerta de erro para o usuário
+            alert("Não foi possível enviar a mensagem. Verifique sua conexão ou tente novamente.");
         }
     }
 
