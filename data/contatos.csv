@@ -1,4 +1,4 @@
-telefone,nome,sobrenome,codigo_produto,id_imagem_produto,valor_fatura,data_vencimento
+telefone,1,2,3,4,5,6
 5511999990001,Maria,Silva,PROD-001,248442338352932,"99,90",2023-12-24T10:00:00-03:00
 5511999990002,João,Santos,PROD-002,987654321012345,"150,50",2023-12-26T18:30:00-03:00
 5511999990003,Ana,Souza,PROD-003,543216789098765,"75,00",2023-12-28T09:00:00-03:00

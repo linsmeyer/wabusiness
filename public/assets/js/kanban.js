@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const boardContainer = document.getElementById('kanban-board');
+    const csvFileInput = document.getElementById('csv-file-input');
     const addColumnBtn = document.getElementById('add-column-btn');
     const searchInput = document.getElementById('kanban-search');
     const KANBAN_STATE_KEY = 'kanban-board-state';
@@ -62,6 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path></svg>
                     </button>
                     <div class="column-dropdown-menu hidden" data-role="column-menu">
+                        <button class="column-dropdown-item" data-action="load-contacts-csv">Carregar contatos</button>
+                        <button class="column-dropdown-item" data-action="edit-column-name">Editar nome</button>
                         <button class="column-dropdown-item" data-action="remove-column">Remover coluna</button>
                     </div>
                 </div>
@@ -102,6 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function editColumnName(columnId) {
+        const columnToEdit = boardState.columns.find(column => column.id === columnId);
+        if (!columnToEdit) return;
+
+        // Pede o novo nome ao usuário usando um prompt
+        const newTitle = prompt("Digite o novo nome para a coluna:", columnToEdit.title);
+
+        // Se o usuário digitou um nome e não clicou em "Cancelar"
+        if (newTitle && newTitle.trim() !== "") {
+            columnToEdit.title = newTitle.trim();
+            saveState();
+            renderBoard(); // Re-renderiza o quadro para mostrar o novo título
+        }
+    }
+
     // --- Inicialização e Anexação de Listeners ---
 
     // Adiciona delegação de eventos ao container do quadro Kanban
@@ -109,17 +127,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = e.target.closest('[data-action]');
         if (!target) return;
 
-        e.stopPropagation(); // Impede que o clique se propague para o listener do 'document'
+        e.stopPropagation();
         
         const action = target.dataset.action;
-        
+        const columnId = target.closest('.kanban-column').dataset.columnId;
+
         if (action === 'toggle-column-menu') {
             toggleColumnMenu(target);
         }
         
         if (action === 'remove-column') {
-            const columnId = target.closest('.kanban-column').dataset.columnId;
             removeColumn(columnId);
+        }
+
+        // NOVO CASE para a ação de editar
+        if (action === 'edit-column-name') {
+            editColumnName(columnId);
+            // Fecha o menu após a ação
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+
+        // NOVO CASE para a ação de carregar CSV
+        if (action === 'load-contacts-csv') {
+            // Guarda o ID da coluna de destino no input e o aciona
+            csvFileInput.dataset.targetColumnId = columnId;
+            csvFileInput.click();
+            // Fecha o menu
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
         }
     });
 
@@ -198,7 +236,71 @@ document.addEventListener('DOMContentLoaded', () => {
         renderBoard();
     }
 
+        
+    
+    // NOVA FUNÇÃO para processar o arquivo CSV
+    function processCsvFile(file, targetColumnId) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            const lines = text.split(/\r\n|\n/);
+            const headers = lines[0].split(',').map(h => h.trim());
+
+            // Validação: verifica se a primeira coluna é 'telefone'
+            if (headers[0].toLowerCase() !== 'telefone') {
+                alert("Erro: O arquivo CSV deve ter 'telefone' como a primeira coluna.");
+                return;
+            }
+
+            const newCards = [];
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i]) continue; // Ignora linhas vazias
+
+                const values = lines[i].split(',');
+                const rowData = {};
+                headers.forEach((header, index) => {
+                    rowData[header] = values[index] ? values[index].trim() : '';
+                });
+                
+                // Cria um novo card com os dados mapeados
+                const newCard = {
+                    id: `card-${rowData.telefone}-${Math.random().toString(36).substr(2, 9)}`,
+                    telefone: rowData.telefone,
+                    // O nome do card será a coluna '1' (antigo 'nome'), se existir.
+                    nome: rowData['1'] || rowData.telefone, 
+                    // Armazena todos os outros dados para referência futura, se necessário
+                    data: rowData
+                };
+                newCards.push(newCard);
+            }
+
+            // Adiciona os novos cards à coluna de destino no estado da aplicação
+            const targetColumn = boardState.columns.find(c => c.id === targetColumnId);
+            if (targetColumn) {
+                targetColumn.cards.push(...newCards);
+                saveState();
+                renderBoard();
+                alert(`${newCards.length} contato(s) carregado(s) com sucesso na coluna "${targetColumn.title}"!`);
+            }
+        };
+
+        reader.readAsText(file);
+    }
+    
     // --- Event Listeners ---
+
+    // Listener para o input de arquivo oculto
+    csvFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        const targetColumnId = csvFileInput.dataset.targetColumnId; // Pega o ID da coluna que acionou
+        if (file && targetColumnId) {
+            processCsvFile(file, targetColumnId);
+        }
+        // Reseta o input para permitir selecionar o mesmo arquivo novamente
+        event.target.value = '';
+    });
 
     addColumnBtn.addEventListener('click', () => {
         const columnName = prompt("Digite o nome da nova coluna:");
@@ -269,5 +371,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Inicialização ---
-    initializeBoard();
+    initializeBoard();    
 });
