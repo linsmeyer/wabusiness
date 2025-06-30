@@ -44,13 +44,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createColumnElement(column) {
         const columnEl = document.createElement('div');
-        columnEl.className = 'kanban-column';
+        // Adicionamos a classe 'kanban-column' aqui, que será nosso identificador para o arraste
+        columnEl.className = 'kanban-column'; 
         columnEl.dataset.columnId = column.id;
         
-        // ESTRUTURA HTML SIMPLIFICADA E CORRETA
+        // A estrutura do cabeçalho agora inclui o ícone de arrastar
         columnEl.innerHTML = `
             <div class="kanban-column-header">
-                <span>${column.title}</span>
+                <!-- NOVO: Ícone de Arrastar (handle) -->
+                <div class="drag-handle cursor-move text-gray-400 mr-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </div>
+
+                <span class="flex-grow">${column.title}</span>
                 <div class="relative">
                     <button class="column-options-btn" data-action="toggle-column-menu">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path></svg>
@@ -63,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="kanban-card-list custom-scrollbar"></div>
         `;
 
+        // ... (resto da função que popula os cards inalterada)
         const cardListEl = columnEl.querySelector('.kanban-card-list');
         column.cards.forEach(card => {
             const cardEl = createCardElement(card);
@@ -214,7 +221,53 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+
+
+    function initializeDragAndDrop() {
+        
+        // --- 1. Lógica para arrastar COLUNAS ---
+        new Sortable(boardContainer, {
+            group: 'kanban-columns',
+            animation: 150,
+            handle: '.drag-handle', // Define que o arraste só começa ao segurar este elemento
+            ghostClass: 'sortable-ghost',
+            onEnd: (evt) => {
+                // Pega a coluna movida
+                const movedColumn = boardState.columns.splice(evt.oldIndex, 1)[0];
+                // Insere na nova posição
+                boardState.columns.splice(evt.newIndex, 0, movedColumn);
+                // Salva a nova ordem das colunas
+                saveState();
+            }
+        });
+
+
+        // --- 2. Lógica para arrastar CARDS (inalterada, mas agora dentro desta função) ---
+        const cardLists = boardContainer.querySelectorAll('.kanban-card-list');
+        cardLists.forEach(list => {
+            new Sortable(list, {
+                group: 'kanban-cards', // Mesmo grupo para permitir mover cards entre colunas
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    const cardId = evt.item.dataset.cardId;
+                    const fromColumnId = evt.from.closest('.kanban-column').dataset.columnId;
+                    const toColumnId = evt.to.closest('.kanban-column').dataset.columnId;
+                    
+                    const fromColumn = boardState.columns.find(c => c.id === fromColumnId);
+                    const cardIndex = fromColumn.cards.findIndex(c => c.id === cardId);
+                    const [movedCard] = fromColumn.cards.splice(cardIndex, 1);
+
+                    const toColumn = boardState.columns.find(c => c.id === toColumnId);
+                    toColumn.cards.splice(evt.newDraggableIndex, 0, movedCard);
+                    
+                    saveState();
+                }
+            });
+        });
+    }
+
+
     // --- Inicialização ---
     initializeBoard();
-
 });
