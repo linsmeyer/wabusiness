@@ -25,8 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeToggleButton = document.getElementById('theme-toggle-btn');
     const themeIconSun = document.getElementById('theme-icon-sun');
     const themeIconMoon = document.getElementById('theme-icon-moon');
-    const templateManagerBtn = document.getElementById('template-manager-btn');
     const savedTheme = localStorage.getItem('whatsapp-theme') || 'light';
+    const kanbanBtn = document.getElementById('kanban-btn');
+    const templateManagerBtn = document.getElementById('template-manager-btn');
+    // ... (outros elementos)
 
     // --- Estado Global da Aplicação ---
     // Variáveis que guardam o estado atual da interface e dos dados.
@@ -518,10 +520,17 @@ document.addEventListener('DOMContentLoaded', () => {
             sendMessage();
         }
     });
+
+    // --- Anexação de Listeners de Evento ---
     templateManagerBtn.addEventListener('click', () => {
         window.location.href = '/templates.html';
     });
+
     themeToggleButton.addEventListener('click', toggleTheme);
+
+    kanbanBtn.addEventListener('click', () => {
+        window.location.href = '/kanban.html';
+    });
 
     // Listener global para fechar painéis e dropdowns.
     document.addEventListener('click', (e) => {

@@ -141,6 +141,8 @@
                 background-color: var(--bg-hover);
             }
             
+            /* Estilos para os ícones do botão Template */
+
             #template-manager-btn .hover-icon {
                 display: none; /* O ícone de hover começa escondido */
             }
@@ -152,6 +154,20 @@
             #template-manager-btn:hover .hover-icon {
                 display: block; /* Mostra o ícone de hover quando o mouse está sobre o botão */
             }
+
+            /* Estilos para os ícones do botão Kanban */
+            #kanban-btn .hover-icon {
+                display: none; /* O ícone de hover começa escondido */
+            }
+
+            #kanban-btn:hover .default-icon {
+                display: none; /* Esconde o ícone padrão quando o mouse está sobre o botão */
+            }
+
+            #kanban-btn:hover .hover-icon {
+                display: block; /* Mostra o ícone de hover quando o mouse está sobre o botão */
+            }
+
         </style>
 
     </head>
@@ -169,7 +185,16 @@
                     </div>
                 </div>
                 <div class="nav-bottom">
-                    <!-- NOVO: Botão para ir para a página de Templates -->
+                    <button id="kanban-btn" class="theme-toggle" title="Quadro Kanban">
+                        <!-- Ícone Padrão (contorno) -->
+                        <span class="default-icon">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-6l-2 2M9 5v6l2-2m6 10v-6l2 2m-2-4v6l-2-2m-8-2h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </span>
+                        <!-- Ícone Hover (preenchido, simulado com stroke mais grosso) -->
+                        <span class="hover-icon">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 17v-6l-2 2M9 5v6l2-2m6 10v-6l2 2m-2-4v6l-2-2m-8-2h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </span>
+                    </button>
                     <button id="template-manager-btn" class="theme-toggle" title="Gerenciar Templates">
                         <!-- Ícone Padrão (contorno) -->
                         <span class="default-icon">

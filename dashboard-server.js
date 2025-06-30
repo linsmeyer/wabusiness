@@ -20,11 +20,52 @@ const DATA_PATH = path.join(__dirname, 'data');
 const CSV_FILE_PATH = path.join(DATA_PATH, 'messages.csv');
 const CONTACTS_FILE_PATH = path.join(DATA_PATH, 'contacts.json');
 const QR_FILE_PATH = path.join(DATA_PATH, 'quick_replies.json');
+const LEADS_CSV_PATH = path.join(DATA_PATH, 'contatos.csv');
 
 
 app.use(express.json());
 // app.use(cors()); // Descomente se precisar
 app.use(express.static(PUBLIC_PATH));
+
+app.get('/api/kanban-leads', async (req, res) => {
+    
+    // Função que lê o CSV e retorna uma Promise com os dados.
+    const readCsvData = () => {
+        return new Promise((resolve, reject) => {
+            const leads = [];
+            if (!fs.existsSync(LEADS_CSV_PATH)) {
+                // Se o arquivo não existe, resolve a Promise com uma lista vazia.
+                return resolve([]);
+            }
+
+            fs.createReadStream(LEADS_CSV_PATH)
+                .pipe(csv())
+                .on('data', (row) => {
+                    // Adicionamos um ID único a cada lead para o drag-and-drop.
+                    row.id = `card-${row.telefone}-${Math.random().toString(36).substr(2, 9)}`;
+                    leads.push(row);
+                })
+                .on('end', () => {
+                    // Quando a leitura termina, resolve a Promise com a lista de leads.
+                    resolve(leads);
+                })
+                .on('error', (error) => {
+                    // Se ocorrer um erro, rejeita a Promise.
+                    console.error("Erro ao ler CSV de contatos para o Kanban:", error);
+                    reject(error);
+                });
+        });
+    };
+
+    try {
+        // 'await' espera a Promise da função readCsvData ser resolvida.
+        const leadsData = await readCsvData();
+        // A resposta só é enviada DEPOIS que a leitura do arquivo foi concluída.
+        res.json(leadsData);
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao processar dados para o Kanban." });
+    }
+});
 
 // Rota de conversas completa
 app.get('/api/conversations', async (req, res) => {

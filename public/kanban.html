@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban de Contatos</title>
+    <!-- Tailwind CSS (usando a mesma configuração) -->
+    <script src="./assets/js/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { /* ... cole aqui sua configuração de cores customizadas ... */ }
+        }
+    </script>
+    <!-- CSS Adicional para o Kanban -->
+    <style type="text/tailwindcss">
+        /* Estilo para o container do quadro, permitindo scroll horizontal */
+        .kanban-board-container {
+            @apply flex flex-grow p-4 space-x-4 overflow-x-auto overflow-y-hidden;
+        }
+        /* Estilo para cada coluna */
+        .kanban-column {
+            @apply bg-gray-200 dark:bg-gray-800 rounded-lg flex flex-col w-72 flex-shrink-0;
+        }
+        .kanban-column-header {
+            @apply relative flex justify-between items-center p-3 font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-300 dark:border-gray-700;
+        }
+
+        /* A lista de cards que terá o scroll vertical */
+        .kanban-card-list {
+            @apply p-2 flex-grow overflow-y-auto;
+            min-height: 100px; /* Garante que a área de drop seja clicável */
+        }
+        /* Estilo do card (reutilizado do chat) */
+        .kanban-card {
+            @apply bg-white dark:bg-gray-700 p-3 rounded-md shadow mb-2 cursor-grab;
+        }
+        .kanban-card:hover {
+            @apply bg-gray-50 dark:bg-gray-600;
+        }
+        /* Estilo para o "fantasma" do card sendo arrastado */
+        .sortable-ghost {
+            @apply opacity-40 bg-blue-200;
+        }
+
+        .kanban-column-header {
+            @apply relative flex justify-between items-center p-3 font-semibold text-gray-700 dark:text-gray-200 border-b border-gray-300 dark:border-gray-700;
+        }
+
+        /* O botão de opções */
+        .column-options-btn {
+            @apply w-7 h-7 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400;
+        }
+
+        .kanban-column:hover .column-options-btn {
+            @apply bg-gray-300 dark:bg-gray-600; /* Mostra um fundo no hover da coluna para indicar clicabilidade */
+        }
+
+        .column-options-btn:hover {
+            @apply bg-gray-400 dark:bg-gray-500; /* Fundo mais escuro no hover do próprio botão */
+        }
+
+        /* O menu dropdown */
+        .column-dropdown-menu {
+            @apply absolute top-full right-0 mt-1 w-40 bg-white dark:bg-gray-800 shadow-lg rounded-md py-1 z-20;
+        }
+        
+        /* A classe 'hidden' do Tailwind controlará a visibilidade */
+
+        /* O item do menu */
+        .column-dropdown-item {
+            @apply block w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 flex flex-col h-screen">
+
+    <!-- Cabeçalho da Página -->
+    <header class="flex-shrink-0 bg-white dark:bg-gray-800 shadow p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-800 dark:text-gray-200">Kanban de Contatos</h1>
+        <div class="flex items-center space-x-4">
+            <input type="search" id="kanban-search" placeholder="Pesquisar card..." class="px-3 py-1.5 border rounded-lg bg-gray-100 dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button id="add-column-btn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">Adicionar Coluna</button>
+            <a href="/" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">← Voltar para o Chat</a>
+        </div>
+    </header>
+
+    <!-- Container do Quadro Kanban -->
+    <main id="kanban-board" class="kanban-board-container">
+        <!-- As colunas serão geradas aqui por JavaScript -->
+    </main>
+    
+    <!-- Biblioteca SortableJS para Drag and Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- Script principal do Kanban -->
+    <script src="assets/js/kanban.js"></script>
+</body>
+</html>
