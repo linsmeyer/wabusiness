@@ -74,6 +74,35 @@
             border: none;
             cursor: pointer;
         }
+
+        .kanban-card {
+            /* Torna o card um container flex em coluna e de posicionamento relativo */
+            @apply bg-white dark:bg-gray-700 p-3 rounded-md shadow mb-2 cursor-grab flex flex-col relative;
+        }
+
+        /* O conteúdo principal do card agora é um item flex */
+        .card-content {
+            @apply flex-grow;
+        }
+
+        /* A barra de ações (footer do card) */
+        .card-tool-action {
+            /* Começa invisível e com opacidade 0 */
+            @apply absolute bottom-0 right-0 mb-1 mr-1 flex items-center space-x-1 opacity-0 transition-opacity;
+            /* Aparece quando o mouse está sobre o card (usando group-hover no JS) */
+        }
+
+        .kanban-card:hover .card-tool-action {
+            @apply opacity-100;
+        }
+        
+        /* Estilo para os botões de ícone dentro da barra de ações */
+        .card-action-btn {
+            @apply p-1 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:text-gray-100;
+        }
+        .card-action-btn.delete {
+            @apply hover:text-red-500;
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex flex-col h-screen">

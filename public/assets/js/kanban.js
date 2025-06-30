@@ -120,9 +120,37 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // funçãp para remover um card
+    function removeCard(cardId, columnId) {
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (!column) return;
+
+        // Filtra o card para fora do array de cards da coluna
+        column.cards = column.cards.filter(card => card.id !== cardId);
+
+        saveState();
+        renderBoard(); // Re-renderiza para remover o card da UI
+    }
+    
+    // funçãp para o botão de teste
+    function showCardInfo(cardId, columnId) {
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (!column) return;
+        const card = column.cards.find(c => c.id === cardId);
+        if (!card) return;
+
+        // Monta uma string com todos os dados do card para o alert
+        const cardDetails = Object.entries(card.data)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('\n');
+            
+        alert(`Informações do Card:\n\n${cardDetails}`);
+    }
+
     // --- Inicialização e Anexação de Listeners ---
 
-    // Adiciona delegação de eventos ao container do quadro Kanban
+    // Modifica o listener de eventos do boardContainer
+    /*
     boardContainer.addEventListener('click', (e) => {
         const target = e.target.closest('[data-action]');
         if (!target) return;
@@ -131,6 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const action = target.dataset.action;
         const columnId = target.closest('.kanban-column').dataset.columnId;
+        const columnEl = target.closest('.kanban-column');
+        const cardEl = target.closest('.kanban-card');
 
         if (action === 'toggle-column-menu') {
             toggleColumnMenu(target);
@@ -159,6 +189,87 @@ document.addEventListener('DOMContentLoaded', () => {
                 menu.classList.add('hidden');
             });
         }
+        
+        
+        // Ações de Coluna
+        if (action === 'toggle-column-menu' || action === 'remove-column' || action === 'edit-column-name') {
+            const columnId = columnEl.dataset.columnId;
+            if (action === 'toggle-column-menu') toggleColumnMenu(target);
+            if (action === 'remove-column') removeColumn(columnId);
+            if (action === 'edit-column-name') {
+                editColumnName(columnId);
+                document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+            }
+            return; // Termina a execução para não processar ações de card
+        }
+        
+        // Ações de Card
+        if (cardEl) {
+            const cardId = cardEl.dataset.cardId;
+            const columnId = columnEl.dataset.columnId;
+
+            if (action === 'remove-card') {
+                removeCard(cardId, columnId);
+            }
+            if (action === 'show-card-info') {
+                showCardInfo(cardId, columnId);
+            }
+        }
+    });
+    */
+
+    // Adiciona delegação de eventos ao container do quadro Kanban
+    boardContainer.addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+
+        e.stopPropagation();
+        
+        const action = target.dataset.action;
+        const columnId = target.closest('.kanban-column').dataset.columnId;
+        const columnEl = target.closest('.kanban-column');
+        const cardEl = target.closest('.kanban-card');
+
+        if (action === 'toggle-column-menu') {
+            toggleColumnMenu(target);
+        }
+        
+        if (action === 'remove-column') {
+            removeColumn(columnId);
+        }
+
+        // NOVO CASE para a ação de editar
+        if (action === 'edit-column-name') {
+            editColumnName(columnId);
+            // Fecha o menu após a ação
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+
+        // NOVO CASE para a ação de carregar CSV
+        if (action === 'load-contacts-csv') {
+            // Guarda o ID da coluna de destino no input e o aciona
+            csvFileInput.dataset.targetColumnId = columnId;
+            csvFileInput.click();
+            // Fecha o menu
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+
+        // Ações de Card
+        if (cardEl) {
+            const cardId = cardEl.dataset.cardId;
+            const columnId = columnEl.dataset.columnId;
+
+            if (action === 'remove-card') {
+                removeCard(cardId, columnId);
+            }
+            if (action === 'show-card-info') {
+                showCardInfo(cardId, columnId);
+            }
+        }
     });
 
     // Listener global para fechar os menus ao clicar fora deles
@@ -171,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    /*
     function createCardElement(card) {
         const cardEl = document.createElement('div');
         cardEl.className = 'kanban-card';
@@ -184,6 +296,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="font-semibold truncate text-sm text-gray-800 dark:text-gray-200">${card.nome || card.telefone}</h3>
                     <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${card.telefone}</p>
                 </div>
+            </div>
+        `;
+        return cardEl;
+    }
+    */
+
+    function createCardElement(card) {
+        const cardEl = document.createElement('div');
+        // Adicionamos a classe 'group' para que o CSS ':hover' funcione nos filhos
+        cardEl.className = 'kanban-card group'; 
+        cardEl.dataset.cardId = card.id;
+
+        // Estrutura HTML do card agora inclui a barra de ações
+        cardEl.innerHTML = `
+            <!-- Conteúdo principal do card -->
+            <div class="card-content">
+                <div class="flex items-center min-w-0">
+                    <div class="w-10 h-10 bg-gray-400 rounded-full mr-3 flex-shrink-0"></div>
+                    <div class="flex-grow overflow-hidden">
+                        <h3 class="font-semibold truncate text-sm text-gray-800 dark:text-gray-200">${card.nome || card.telefone}</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${card.telefone}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOVO: Barra de Ações (Tool Action) no Rodapé -->
+            <div class="card-tool-action">
+                <button class="card-action-btn" title="Informações" data-action="show-card-info">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                <button class="card-action-btn delete" title="Remover Card" data-action="remove-card">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
             </div>
         `;
         return cardEl;
@@ -238,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
     
-    // NOVA FUNÇÃO para processar o arquivo CSV
+    // funçãp para processar o arquivo CSV
     function processCsvFile(file, targetColumnId) {
         if (!file) return;
 
