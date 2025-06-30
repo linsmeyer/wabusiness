@@ -6,6 +6,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('kanban-search');
     const KANBAN_STATE_KEY = 'kanban-board-state';
 
+    // --- Seleção de Elementos ---
+    const editColumnModal = document.getElementById('edit-column-modal');
+    const editColumnForm = document.getElementById('edit-column-form');
+    const cancelEditColumnBtn = document.getElementById('cancel-edit-column-btn');
+    const colorPalette = document.getElementById('color-palette');
+
+    // ... (estado global boardState)
+
+    // --- Paleta de Cores e Configuração ---
+    const PALETTE = [
+        // [cor do header, cor do fundo da lista]
+        ['bg-gray-300', 'bg-gray-200'], ['dark:bg-gray-700', 'dark:bg-gray-800'],
+        ['bg-red-400', 'bg-red-100'], ['dark:bg-red-800', 'dark:bg-red-900'],
+        ['bg-yellow-400', 'bg-yellow-100'], ['dark:bg-yellow-800', 'dark:bg-yellow-900'],
+        ['bg-green-400', 'bg-green-100'], ['dark:bg-green-800', 'dark:bg-green-900'],
+        ['bg-blue-400', 'bg-blue-100'], ['dark:bg-blue-800', 'dark:bg-blue-900'],
+        ['bg-purple-400', 'bg-purple-100'], ['dark:bg-purple-800', 'dark:bg-purple-900'],
+    ];
+
+
     let boardState = {
         columns: []
     };
@@ -24,9 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Estado inicial se não houver nada salvo
             boardState = {
                 columns: [
-                    { id: `col-${Date.now()}`, title: "Novos Leads", cards: [] },
-                    { id: `col-${Date.now()+1}`, title: "Em Contato", cards: [] },
-                    { id: `col-${Date.now()+2}`, title: "Convertidos", cards: [] },
+                    { id: `col-${Date.now()}`, title: "Remarcação", cards: [] },
+                    { id: `col-${Date.now()+1}`, title: "Lembrete Vencimento", cards: [] },
+                    { id: `col-${Date.now()+2}`, title: "Cobrança", cards: [] },,
+                    { id: `col-${Date.now()+3}`, title: "Confirmação", cards: [] },
                 ]
             };
         }
@@ -45,13 +66,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createColumnElement(column) {
         const columnEl = document.createElement('div');
-        // Adicionamos a classe 'kanban-column' aqui, que será nosso identificador para o arraste
-        columnEl.className = 'kanban-column'; 
+
+        // Define as classes de cor com base no estado salvo
+        const [headerColor, listColor] = column.color || [PALETTE[0][0], PALETTE[0][1]];
+        const [darkHeaderColor, darkListColor] = column.color ? [PALETTE[PALETTE.indexOf(column.color)+1][0], PALETTE[PALETTE.indexOf(column.color)+1][1]] : [PALETTE[1][0], PALETTE[1][1]];
+        columnEl.className = `kanban-column`;
         columnEl.dataset.columnId = column.id;
-        
+            
         // A estrutura do cabeçalho agora inclui o ícone de arrastar
         columnEl.innerHTML = `
-            <div class="kanban-column-header">
+            <div class="kanban-column-header p-3 font-semibold border-b border-black/10 dark:border-white/10 ${headerColor} ${darkHeaderColor}">
                 <!-- NOVO: Ícone de Arrastar (handle) -->
                 <div class="drag-handle cursor-move text-gray-400 mr-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -69,10 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             </div>
-            <div class="kanban-card-list custom-scrollbar"></div>
+            <div class="kanban-card-list custom-scrollbar p-2 flex-grow overflow-y-auto ${listColor} ${darkListColor}"></div>
         `;
 
-        // ... (resto da função que popula os cards inalterada)
         const cardListEl = columnEl.querySelector('.kanban-card-list');
         column.cards.forEach(card => {
             const cardEl = createCardElement(card);
@@ -149,75 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Inicialização e Anexação de Listeners ---
 
-    // Modifica o listener de eventos do boardContainer
-    /*
-    boardContainer.addEventListener('click', (e) => {
-        const target = e.target.closest('[data-action]');
-        if (!target) return;
-
-        e.stopPropagation();
-        
-        const action = target.dataset.action;
-        const columnId = target.closest('.kanban-column').dataset.columnId;
-        const columnEl = target.closest('.kanban-column');
-        const cardEl = target.closest('.kanban-card');
-
-        if (action === 'toggle-column-menu') {
-            toggleColumnMenu(target);
-        }
-        
-        if (action === 'remove-column') {
-            removeColumn(columnId);
-        }
-
-        // NOVO CASE para a ação de editar
-        if (action === 'edit-column-name') {
-            editColumnName(columnId);
-            // Fecha o menu após a ação
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-
-        // NOVO CASE para a ação de carregar CSV
-        if (action === 'load-contacts-csv') {
-            // Guarda o ID da coluna de destino no input e o aciona
-            csvFileInput.dataset.targetColumnId = columnId;
-            csvFileInput.click();
-            // Fecha o menu
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-        
-        
-        // Ações de Coluna
-        if (action === 'toggle-column-menu' || action === 'remove-column' || action === 'edit-column-name') {
-            const columnId = columnEl.dataset.columnId;
-            if (action === 'toggle-column-menu') toggleColumnMenu(target);
-            if (action === 'remove-column') removeColumn(columnId);
-            if (action === 'edit-column-name') {
-                editColumnName(columnId);
-                document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
-            }
-            return; // Termina a execução para não processar ações de card
-        }
-        
-        // Ações de Card
-        if (cardEl) {
-            const cardId = cardEl.dataset.cardId;
-            const columnId = columnEl.dataset.columnId;
-
-            if (action === 'remove-card') {
-                removeCard(cardId, columnId);
-            }
-            if (action === 'show-card-info') {
-                showCardInfo(cardId, columnId);
-            }
-        }
-    });
-    */
-
     // Adiciona delegação de eventos ao container do quadro Kanban
     boardContainer.addEventListener('click', (e) => {
         const target = e.target.closest('[data-action]');
@@ -238,15 +192,6 @@ document.addEventListener('DOMContentLoaded', () => {
             removeColumn(columnId);
         }
 
-        // NOVO CASE para a ação de editar
-        if (action === 'edit-column-name') {
-            editColumnName(columnId);
-            // Fecha o menu após a ação
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-
         // NOVO CASE para a ação de carregar CSV
         if (action === 'load-contacts-csv') {
             // Guarda o ID da coluna de destino no input e o aciona
@@ -270,6 +215,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCardInfo(cardId, columnId);
             }
         }
+
+
+        // Ações de edição de coluna
+        if (action === 'edit-column-name') {
+            openEditModal(columnId);
+            // Fecha o menu dropdown
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
     });
 
     // Listener global para fechar os menus ao clicar fora deles
@@ -281,26 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-
-    /*
-    function createCardElement(card) {
-        const cardEl = document.createElement('div');
-        cardEl.className = 'kanban-card';
-        cardEl.dataset.cardId = card.id;
-
-        // Reutilizando o estilo da lista de conversas do chat
-        cardEl.innerHTML = `
-            <div class="flex-grow flex items-center min-w-0">
-                <div class="w-10 h-10 bg-gray-400 rounded-full mr-3 flex-shrink-0"></div>
-                <div class="flex-grow overflow-hidden">
-                    <h3 class="font-semibold truncate text-sm text-gray-800 dark:text-gray-200">${card.nome || card.telefone}</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${card.telefone}</p>
-                </div>
-            </div>
-        `;
-        return cardEl;
-    }
-    */
 
     function createCardElement(card) {
         const cardEl = document.createElement('div');
@@ -433,8 +368,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
         reader.readAsText(file);
     }
+        
+    // --- Lógica do Modal e Event Listeners ---
+
+    function openEditModal(columnId) {
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (!column) return;
+        
+        // Preenche o formulário com os dados atuais da coluna
+        editColumnForm.querySelector('#edit-column-id').value = column.id;
+        editColumnForm.querySelector('#edit-column-name').value = column.title;
+        
+        // Renderiza a paleta de cores
+        colorPalette.innerHTML = '';
+        PALETTE.forEach((colorPair, index) => {
+            if(index % 2 !== 0) return; // Pula as cores do modo dark
+            
+            const swatch = document.createElement('button');
+            swatch.type = 'button';
+            swatch.className = `color-swatch ${colorPair[0]} dark:${PALETTE[index+1][0]}`;
+            swatch.dataset.colorIndex = index;
+            
+            // Marca a cor atual como selecionada
+            if (column.color && column.color[0] === colorPair[0]) {
+                swatch.classList.add('selected');
+            }
+            
+            colorPalette.appendChild(swatch);
+        });
+
+        editColumnModal.classList.remove('hidden');
+    }
     
+    function closeEditModal() {
+        editColumnModal.classList.add('hidden');
+    }
+
     // --- Event Listeners ---
+
+
+    // Listener para seleção de cor na paleta
+    colorPalette.addEventListener('click', (e) => {
+        if (e.target.classList.contains('color-swatch')) {
+            // Remove a seleção de qualquer outra cor
+            colorPalette.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('selected'));
+            // Adiciona a seleção à cor clicada
+            e.target.classList.add('selected');
+        }
+    });
+
+    // Listener para o formulário de edição
+    editColumnForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const columnId = e.target.querySelector('#edit-column-id').value;
+        const newTitle = e.target.querySelector('#edit-column-name').value;
+        const selectedSwatch = e.target.querySelector('.color-swatch.selected');
+        
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (column) {
+            column.title = newTitle.trim();
+            if (selectedSwatch) {
+                const colorIndex = parseInt(selectedSwatch.dataset.colorIndex);
+                // Salva a cor do modo claro e o JS deduzirá a do modo escuro
+                column.color = PALETTE[colorIndex];
+            }
+        }
+
+        saveState();
+        renderBoard();
+        closeEditModal();
+    });
+
+    cancelEditColumnBtn.addEventListener('click', closeEditModal);
+    
 
     // Listener para o input de arquivo oculto
     csvFileInput.addEventListener('change', (event) => {
@@ -516,5 +522,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Inicialização ---
-    initializeBoard();    
+    initializeBoard();
 });
