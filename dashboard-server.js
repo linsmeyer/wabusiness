@@ -20,52 +20,57 @@ const DATA_PATH = path.join(__dirname, 'data');
 const CSV_FILE_PATH = path.join(DATA_PATH, 'messages.csv');
 const CONTACTS_FILE_PATH = path.join(DATA_PATH, 'contacts.json');
 const QR_FILE_PATH = path.join(DATA_PATH, 'quick_replies.json');
-const LEADS_CSV_PATH = path.join(DATA_PATH, 'contatos.csv');
+const KANBAN_LEADS_CSV_PATH = path.join(DATA_PATH, 'contatos.csv');
 
 
 app.use(express.json());
 // app.use(cors()); // Descomente se precisar
 app.use(express.static(PUBLIC_PATH));
 
-app.get('/api/kanban-leads', async (req, res) => {
+app.get('/api/kanban-leads', (req, res) => {
     
-    // Função que lê o CSV e retorna uma Promise com os dados.
-    const readCsvData = () => {
-        return new Promise((resolve, reject) => {
-            const leads = [];
-            if (!fs.existsSync(LEADS_CSV_PATH)) {
-                // Se o arquivo não existe, resolve a Promise com uma lista vazia.
-                return resolve([]);
-            }
-
-            fs.createReadStream(LEADS_CSV_PATH)
-                .pipe(csv())
-                .on('data', (row) => {
-                    // Adicionamos um ID único a cada lead para o drag-and-drop.
-                    row.id = `card-${row.telefone}-${Math.random().toString(36).substr(2, 9)}`;
-                    leads.push(row);
-                })
-                .on('end', () => {
-                    // Quando a leitura termina, resolve a Promise com a lista de leads.
-                    resolve(leads);
-                })
-                .on('error', (error) => {
-                    // Se ocorrer um erro, rejeita a Promise.
-                    console.error("Erro ao ler CSV de contatos para o Kanban:", error);
-                    reject(error);
-                });
-        });
-    };
-
-    try {
-        // 'await' espera a Promise da função readCsvData ser resolvida.
-        const leadsData = await readCsvData();
-        // A resposta só é enviada DEPOIS que a leitura do arquivo foi concluída.
-        res.json(leadsData);
-    } catch (error) {
-        res.status(500).json({ error: "Erro ao processar dados para o Kanban." });
+    if (!fs.existsSync(KANBAN_LEADS_CSV_PATH)) {
+        console.error(`[KANBAN-API] Erro: Arquivo não encontrado em ${KANBAN_LEADS_CSV_PATH}`);
+        return res.json([]);
     }
+
+    const leads = [];
+
+    fs.createReadStream(KANBAN_LEADS_CSV_PATH)
+        .pipe(csv())
+        .on('data', (row) => {
+            // Validação básica para garantir que a linha tem os dados esperados.
+            if (!row.telefone) {
+                return; // Pula linhas vazias ou malformadas
+            }
+            
+            // Cria um novo objeto "lead" com os campos mapeados para nomes descritivos.
+            const newLead = {
+                // ID único para o card, essencial para o drag-and-drop
+                id: `card-${row.telefone}-${Math.random().toString(36).substr(2, 9)}`,
+                
+                // Mapeamento dos campos
+                telefone: row.telefone,
+                nome: row['1'] || '', // Pega o valor da coluna "1" e mapeia para "nome"
+                valor: row['2'] || '', // Pega o valor da coluna "2" e mapeia para "valor"
+                vencimento: row['3'] || '', // Pega o valor da coluna "3" e mapeia para "vencimento"
+
+                // Mantemos o objeto 'data' original para a funcionalidade "show-card-info"
+                data: row 
+            };
+            
+            leads.push(newLead);
+        })
+        .on('end', () => {
+            console.log(`[KANBAN-API] Leitura concluída. Encontrados ${leads.length} leads.`);
+            res.status(200).json(leads);
+        })
+        .on('error', (error) => {
+            console.error("Erro ao ler o arquivo CSV para o Kanban:", error);
+            res.status(500).json({ error: "Erro interno ao processar os dados dos leads." });
+        });
 });
+
 
 // Rota de conversas completa
 app.get('/api/conversations', async (req, res) => {
