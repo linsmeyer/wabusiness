@@ -201,7 +201,90 @@ document.addEventListener('DOMContentLoaded', () => {
         return cardEl;
     }
 
-    // FUNÇÃO processCsvFile MODIFICADA
+    // FUNÇÃO processCsvFile
+
+    function processCsvFile(file, targetColumnId) {
+        if (!file) return;
+
+        const targetColumn = boardState.columns.find(c => c.id === targetColumnId);
+        if (!targetColumn) return;
+
+        // 1. Cria um Set com todos os telefones que já existem APENAS na coluna de destino.
+        const existingPhonesInColumn = new Set(targetColumn.cards.map(card => card.telefone));
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== '');
+            if (lines.length < 2) {
+                alert("Arquivo CSV está vazio ou contém apenas o cabeçalho.");
+                return;
+            }
+
+            const fileHeaders = lines[0].split(',').map(h => h.trim());
+            const customHeaders = targetColumn.csvHeaders;
+            const headersToUse = customHeaders ? customHeaders.split(',').map(h => h.trim()) : fileHeaders;
+            
+            if (customHeaders && fileHeaders.length !== headersToUse.length) {
+                alert(`Erro: O arquivo CSV tem ${fileHeaders.length} colunas, mas você definiu ${headersToUse.length} variáveis.`);
+                return;
+            }
+            if (headersToUse[0].toLowerCase() !== 'telefone') {
+                alert("Erro: A primeira variável (cabeçalho) definida para esta coluna deve ser 'telefone'.");
+                return;
+            }
+            
+            const newCards = [];
+            let skippedCount = 0;
+            // Use um Set para desduplicar contatos DENTRO do próprio arquivo CSV
+            const phonesInThisFile = new Set();
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                const rowData = {};
+                headersToUse.forEach((header, index) => {
+                    rowData[header] = values[index] ? values[index].trim() : '';
+                });
+
+                const phone = rowData.telefone;
+
+                // 2. Validação de Duplicatas:
+                // O telefone é válido se:
+                // a) Ele existe.
+                // b) Ele NÃO existe na coluna de destino.
+                // c) Ele ainda não foi adicionado a partir deste mesmo arquivo.
+                if (phone && !existingPhonesInColumn.has(phone) && !phonesInThisFile.has(phone)) {
+                    const newCard = {
+                        id: `card-${phone}-${Math.random().toString(36).substr(2, 9)}`,
+                        telefone: phone,
+                        nome: rowData['1'] || phone,
+                        data: rowData
+                    };
+                    newCards.push(newCard);
+                    // Adiciona ao Set local para evitar duplicatas do mesmo arquivo.
+                    phonesInThisFile.add(phone);
+                } else {
+                    skippedCount++;
+                }
+            }
+
+            if (newCards.length > 0) {
+                targetColumn.cards.push(...newCards);
+                saveState();
+                renderBoard();
+            }
+
+            let message = `${newCards.length} novo(s) contato(s) carregado(s) com sucesso na coluna "${targetColumn.title}"!`;
+            if (skippedCount > 0) {
+                message += `\n${skippedCount} contato(s) foram ignorados por serem duplicados no arquivo ou já existirem nesta coluna.`;
+            }
+            alert(message);
+        };
+
+        reader.readAsText(file);
+    }
+
+    /*
     function processCsvFile(file, targetColumnId) {
         if (!file) return;
 
@@ -259,6 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         reader.readAsText(file);
     }
+    */
     
     // NOVAS FUNÇÕES para o modal de variáveis
     function openEditVariablesModal(columnId) {
