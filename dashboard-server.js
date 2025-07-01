@@ -27,6 +27,27 @@ app.use(express.json());
 // app.use(cors()); // Descomente se precisar
 app.use(express.static(PUBLIC_PATH));
 
+
+app.post('/api/kanban/send-message', (req, res) => {
+    const cardData = req.body;
+
+    // Validação básica
+    if (!cardData || !cardData.telefone) {
+        return res.status(400).json({ success: false, error: 'Dados do card inválidos.' });
+    }
+
+    console.log(`[KANBAN-SEND] Recebido para processar: ${cardData.telefone}`);
+    
+    // Simula um tempo de processamento/envio de rede (entre 200ms e 700ms)
+    const delay = Math.random() * 500 + 200; 
+
+    setTimeout(() => {
+        console.log(`[KANBAN-SEND] Processado com sucesso: ${cardData.telefone}`);
+        res.status(200).json({ success: true, message: `Mensagem enviada para ${cardData.telefone}` });
+    }, delay);
+});
+
+
 app.get('/api/kanban-leads', (req, res) => {
     
     if (!fs.existsSync(KANBAN_LEADS_CSV_PATH)) {

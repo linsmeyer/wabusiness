@@ -162,7 +162,7 @@
         </div>
     </div>
 
-    <!-- NOVO: Modal para Editar Variáveis (Cabeçalhos do CSV) -->
+    <!-- Modal para Editar Variáveis (Cabeçalhos do CSV) -->
     <div id="edit-variables-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
             <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Editar Variáveis de Importação</h3>
@@ -178,6 +178,29 @@
                     <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Salvar Variáveis</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!--  Modal de Progresso de Envio -->
+    <div id="progress-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">Enviando Mensagens...</h3>
+            
+            <div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                <span>Progresso: </span>
+                <span id="progress-text" class="font-bold">0 / 0</span>
+            </div>
+
+            <!-- Barra de Progresso -->
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                <div id="progress-bar" class="bg-blue-500 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <p id="progress-status" class="mt-4 text-sm text-center text-gray-500">Iniciando envio...</p>
+
+            <div class="mt-6 flex justify-center">
+                <button type="button" id="cancel-send-btn" class="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Cancelar Envio</button>
+            </div>
         </div>
     </div>
 

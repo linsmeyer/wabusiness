@@ -33,6 +33,91 @@ document.addEventListener('DOMContentLoaded', () => {
         columns: []
     };
 
+    const progressModal = document.getElementById('progress-modal');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const progressStatus = document.getElementById('progress-status');
+    const cancelSendBtn = document.getElementById('cancel-send-btn');
+    // ... (outros elementos)
+
+    // --- Estado Global ---
+    let isSendingActive = false; // Flag para controlar o processo de envio
+
+
+    async function startSendingProcess(columnId) {
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (!column) return;
+
+        const cardsToSend = column.cards.filter(card => !card.processed);
+        if (cardsToSend.length === 0) {
+            alert("Todos os contatos nesta coluna já foram processados.");
+            return;
+        }
+
+        isSendingActive = true;
+        let processedCount = 0;
+        const totalToSend = cardsToSend.length;
+
+        // Abre e configura o modal de progresso
+        progressModal.classList.remove('hidden');
+        progressText.textContent = `0 / ${totalToSend}`;
+        progressBar.style.width = '0%';
+        progressStatus.textContent = `Preparando para enviar...`;
+
+        // Loop de envio
+        for (const card of cardsToSend) {
+            // Se o usuário cancelou, para o loop
+            if (!isSendingActive) {
+                progressStatus.textContent = 'Envio cancelado pelo usuário.';
+                break;
+            }
+
+            progressStatus.textContent = `Enviando para ${card.nome || card.telefone}...`;
+
+            try {
+                const response = await fetch('/api/kanban/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(card)
+                });
+                
+                if (response.ok) {
+                    processedCount++;
+                    // Marca o card como processado no estado
+                    card.processed = true;
+                    // Atualiza a UI
+                    progressText.textContent = `${processedCount} / ${totalToSend}`;
+                    const percentage = (processedCount / totalToSend) * 100;
+                    progressBar.style.width = `${percentage}%`;
+                    
+                    // Atualiza visualmente o card na lista (muda a cor do ícone)
+                    const cardEl = document.querySelector(`[data-card-id="${card.id}"]`);
+                    if (cardEl) {
+                        cardEl.querySelector('[data-action="show-card-info"]')?.classList.add('text-green-500');
+                    }
+                } else {
+                     progressStatus.textContent = `Erro ao enviar para ${card.telefone}. Pulando...`;
+                }
+            } catch (error) {
+                console.error("Erro de rede:", error);
+                progressStatus.textContent = `Erro de rede. Verifique a conexão.`;
+            }
+        }
+
+        if (isSendingActive) {
+            progressStatus.textContent = 'Envio concluído!';
+        }
+        
+        saveState(); // Salva o estado final com os cards marcados como processados
+        isSendingActive = false;
+        
+        // Mantém o modal aberto por alguns segundos para o usuário ver o resultado final
+        setTimeout(() => {
+            progressModal.classList.add('hidden');
+        }, 2000);
+    }
+
+
     // --- Funções de Estado e Persistência ---
 
     function saveState() {
@@ -104,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="column-dropdown-item" data-action="load-contacts-csv">Carregar contatos</button>
                         <button class="column-dropdown-item" data-action="edit-column-name">Editar nome</button>
                         <button class="column-dropdown-item" data-action="remove-column">Remover coluna</button>
+                        <button class="column-dropdown-item" data-action="send-column-messages">Enviar mensagem</button>
                     </div>
                 </div>
             </div>
@@ -156,21 +242,31 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // funçãp para o botão de teste
     function showCardInfo(cardId, columnId) {
+        
         const column = boardState.columns.find(c => c.id === columnId);
         if (!column) return;
         const card = column.cards.find(c => c.id === cardId);
         if (!card) return;
 
         // Monta uma string com todos os dados do card para o alert
-        const cardDetails = Object.entries(card.data)
+        let cardDetails = Object.entries(card.data)
             .map(([key, value]) => `${key}: ${value}`)
             .join('\n');
-            
+        
+        // Adiciona o status de processamento
+        if (card.processed) {
+            cardDetails += '\n\nStatus: Processado';
+        }
+
         alert(`Informações do Card:\n\n${cardDetails}`);
     }
 
-        function createCardElement(card) {
+    function createCardElement(card) {
         const cardEl = document.createElement('div');
+
+        // Verifica se o card já foi processado para mudar a cor do ícone
+        const infoIconColor = card.processed ? 'text-green-500' : 'text-gray-400';
+
         // Adicionamos a classe 'group' para que o CSS ':hover' funcione nos filhos
         cardEl.className = 'kanban-card group'; 
         cardEl.dataset.cardId = card.id;
@@ -190,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <!-- NOVO: Barra de Ações (Tool Action) no Rodapé -->
             <div class="card-tool-action">
-                <button class="card-action-btn" title="Informações" data-action="show-card-info">
+                <button class="card-action-btn ${infoIconColor}" title="Informações" data-action="show-card-info">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </button>
                 <button class="card-action-btn delete" title="Remover Card" data-action="remove-card">
@@ -284,65 +380,6 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsText(file);
     }
 
-    /*
-    function processCsvFile(file, targetColumnId) {
-        if (!file) return;
-
-        const targetColumn = boardState.columns.find(c => c.id === targetColumnId);
-        if (!targetColumn) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const text = event.target.result;
-            const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== ''); // Ignora linhas em branco
-            if (lines.length < 2) {
-                alert("Arquivo CSV está vazio ou contém apenas o cabeçalho.");
-                return;
-            }
-
-            const fileHeaders = lines[0].split(',').map(h => h.trim());
-            
-            // Usa os cabeçalhos customizados da coluna, se existirem, senão usa os do arquivo.
-            const customHeaders = targetColumn.csvHeaders;
-            const headersToUse = customHeaders ? customHeaders.split(',').map(h => h.trim()) : fileHeaders;
-            
-            // Validação do número de colunas
-            if (customHeaders && fileHeaders.length !== headersToUse.length) {
-                alert(`Erro: O arquivo CSV tem ${fileHeaders.length} colunas, mas você definiu ${headersToUse.length} variáveis. A quantidade deve ser a mesma.`);
-                return;
-            }
-
-            // Validação do primeiro campo dos cabeçalhos a serem usados
-            if (headersToUse[0].toLowerCase() !== 'telefone') {
-                alert("Erro: A primeira variável (cabeçalho) definida para esta coluna deve ser 'telefone'.");
-                return;
-            }
-            
-            const newCards = [];
-            for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',');
-                const rowData = {};
-                headersToUse.forEach((header, index) => {
-                    rowData[header] = values[index] ? values[index].trim() : '';
-                });
-
-                const newCard = {
-                    id: `card-${rowData.telefone}-${Math.random().toString(36).substr(2, 9)}`,
-                    telefone: rowData.telefone,
-                    nome: rowData['1'] || rowData.telefone, // Mapeamento correto
-                    data: rowData
-                };
-                newCards.push(newCard);
-            }
-
-            targetColumn.cards.push(...newCards);
-            saveState();
-            renderBoard();
-            alert(`${newCards.length} contato(s) carregado(s) com sucesso na coluna "${targetColumn.title}"!`);
-        };
-        reader.readAsText(file);
-    }
-    */
     
     // NOVAS FUNÇÕES para o modal de variáveis
     function openEditVariablesModal(columnId) {
@@ -476,6 +513,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Inicialização e Anexação de Listeners ---
 
+    // Listener para o botão de cancelar no modal de progresso
+    cancelSendBtn.addEventListener('click', () => {
+        isSendingActive = false;
+    });
+
     // Adiciona delegação de eventos ao container do quadro Kanban
     boardContainer.addEventListener('click', (e) => {
         const target = e.target.closest('[data-action]');
@@ -530,6 +572,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // NOVO CASE para a ação de editar variáveis
         if (action === 'edit-variables') {
             openEditVariablesModal(columnId);
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+        }
+
+        // NOVO CASE para a ação de enviar mensagens
+        if (action === 'send-column-messages') {
+            startSendingProcess(columnId);
             document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
         }
     });
