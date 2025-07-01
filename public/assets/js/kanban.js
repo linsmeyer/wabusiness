@@ -388,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         editVariablesForm.querySelector('#edit-variables-column-id').value = column.id;
         // Preenche com as variáveis salvas ou com o padrão
-        editVariablesForm.querySelector('#variables-textarea').value = column.csvHeaders || 'telefone,1,2,3';
+        editVariablesForm.querySelector('#variables-textarea').value = column.csvHeaders || 'telefone,1,2,3,4';
         
         editVariablesModal.classList.remove('hidden');
     }
@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: newTitle,
                 cards: [],
                 color: selectedColor, // Salva a cor selecionada
-                csvHeaders: 'telefone,1,2,3' // Define um padrão de variáveis
+                csvHeaders: 'telefone,1,2,3,4' // Define um padrão de variáveis
             });
         }
 
