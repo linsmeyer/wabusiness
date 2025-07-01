@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             boardState = {
                 columns: [
                     { id: `col-${Date.now()}`, title: "Remarcação", cards: [] },
-                    { id: `col-${Date.now()+1}`, title: "Lembrete Vencimento", cards: [] },
+                    { id: `col-${Date.now()+1}`, title: "Vencimento", cards: [] },
                     { id: `col-${Date.now()+2}`, title: "Cobrança", cards: [] },,
                     { id: `col-${Date.now()+3}`, title: "Confirmação", cards: [] },
                 ]
@@ -70,9 +70,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function createColumnElement(column) {
         const columnEl = document.createElement('div');
 
-        // Define as classes de cor com base no estado salvo
-        const [headerColor, listColor] = column.color || [PALETTE[0][0], PALETTE[0][1]];
-        const [darkHeaderColor, darkListColor] = column.color ? [PALETTE[PALETTE.indexOf(column.color)+1][0], PALETTE[PALETTE.indexOf(column.color)+1][1]] : [PALETTE[1][0], PALETTE[1][1]];
+        // Define as cores padrão (cinza) se nenhuma cor estiver definida para a coluna
+        const defaultLightColors = ['bg-gray-300', 'bg-gray-200'];
+        const defaultDarkColors = ['dark:bg-gray-700', 'dark:bg-gray-800'];
+
+        // Pega a cor salva ou usa a padrão
+        const [headerColor, listColor] = column.color || defaultLightColors;
+        // Encontra o par correspondente para o modo escuro na paleta
+        const paletteIndex = PALETTE.findIndex(p => p[0] === headerColor);
+        const [darkHeaderColor, darkListColor] = (paletteIndex !== -1 && PALETTE[paletteIndex + 1]) 
+            ? [PALETTE[paletteIndex + 1][0], PALETTE[paletteIndex + 1][1]] 
+            : defaultDarkColors;
+
+
         columnEl.className = `kanban-column`;
         columnEl.dataset.columnId = column.id;
             
