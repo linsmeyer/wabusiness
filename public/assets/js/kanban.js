@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelEditColumnBtn = document.getElementById('cancel-edit-column-btn');
     const colorPalette = document.getElementById('color-palette');
 
+
+    const editVariablesModal = document.getElementById('edit-variables-modal');
+    const editVariablesForm = document.getElementById('edit-variables-form');
+    const cancelEditVariablesBtn = document.getElementById('cancel-edit-variables-btn');
+
     // ... (estado global boardState)
 
     // --- Paleta de Cores e Configuração ---
@@ -87,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path></svg>
                     </button>
                     <div class="column-dropdown-menu hidden" data-role="column-menu">
+                        <button class="column-dropdown-item" data-action="edit-variables">Editar variáveis</button>
                         <button class="column-dropdown-item" data-action="load-contacts-csv">Carregar contatos</button>
                         <button class="column-dropdown-item" data-action="edit-column-name">Editar nome</button>
                         <button class="column-dropdown-item" data-action="remove-column">Remover coluna</button>
@@ -125,21 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Se o menu estava escondido, mostra-o. Se estava visível, ele já foi fechado pela linha acima.
         if (isHidden) {
             menu.classList.remove('hidden');
-        }
-    }
-
-    function editColumnName(columnId) {
-        const columnToEdit = boardState.columns.find(column => column.id === columnId);
-        if (!columnToEdit) return;
-
-        // Pede o novo nome ao usuário usando um prompt
-        const newTitle = prompt("Digite o novo nome para a coluna:", columnToEdit.title);
-
-        // Se o usuário digitou um nome e não clicou em "Cancelar"
-        if (newTitle && newTitle.trim() !== "") {
-            columnToEdit.title = newTitle.trim();
-            saveState();
-            renderBoard(); // Re-renderiza o quadro para mostrar o novo título
         }
     }
 
@@ -216,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-
         // Ações de edição de coluna
         if (action === 'edit-column-name') {
             openEditModal(columnId);
@@ -224,6 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
                 menu.classList.add('hidden');
             });
+        }
+
+        // NOVO CASE para a ação de editar variáveis
+        if (action === 'edit-variables') {
+            openEditVariablesModal(columnId);
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
         }
     });
 
@@ -316,9 +312,120 @@ document.addEventListener('DOMContentLoaded', () => {
         renderBoard();
     }
 
-        
+
+
+    // FUNÇÃO processCsvFile MODIFICADA
+    function processCsvFile(file, targetColumnId) {
+        if (!file) return;
+
+        const targetColumn = boardState.columns.find(c => c.id === targetColumnId);
+        if (!targetColumn) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            const lines = text.split(/\r\n|\n/).filter(line => line.trim() !== ''); // Ignora linhas em branco
+            if (lines.length < 2) {
+                alert("Arquivo CSV está vazio ou contém apenas o cabeçalho.");
+                return;
+            }
+
+            const fileHeaders = lines[0].split(',').map(h => h.trim());
+            
+            // Usa os cabeçalhos customizados da coluna, se existirem, senão usa os do arquivo.
+            const customHeaders = targetColumn.csvHeaders;
+            const headersToUse = customHeaders ? customHeaders.split(',').map(h => h.trim()) : fileHeaders;
+            
+            // Validação do número de colunas
+            if (customHeaders && fileHeaders.length !== headersToUse.length) {
+                alert(`Erro: O arquivo CSV tem ${fileHeaders.length} colunas, mas você definiu ${headersToUse.length} variáveis. A quantidade deve ser a mesma.`);
+                return;
+            }
+
+            // Validação do primeiro campo dos cabeçalhos a serem usados
+            if (headersToUse[0].toLowerCase() !== 'telefone') {
+                alert("Erro: A primeira variável (cabeçalho) definida para esta coluna deve ser 'telefone'.");
+                return;
+            }
+            
+            const newCards = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',');
+                const rowData = {};
+                headersToUse.forEach((header, index) => {
+                    rowData[header] = values[index] ? values[index].trim() : '';
+                });
+
+                const newCard = {
+                    id: `card-${rowData.telefone}-${Math.random().toString(36).substr(2, 9)}`,
+                    telefone: rowData.telefone,
+                    nome: rowData['1'] || rowData.telefone, // Mapeamento correto
+                    data: rowData
+                };
+                newCards.push(newCard);
+            }
+
+            targetColumn.cards.push(...newCards);
+            saveState();
+            renderBoard();
+            alert(`${newCards.length} contato(s) carregado(s) com sucesso na coluna "${targetColumn.title}"!`);
+        };
+        reader.readAsText(file);
+    }
     
+    // NOVAS FUNÇÕES para o modal de variáveis
+    function openEditVariablesModal(columnId) {
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (!column) return;
+        
+        editVariablesForm.querySelector('#edit-variables-column-id').value = column.id;
+        // Preenche com as variáveis salvas ou com o padrão
+        editVariablesForm.querySelector('#variables-textarea').value = column.csvHeaders || 'telefone,1,2,3';
+        
+        editVariablesModal.classList.remove('hidden');
+    }
+
+    function closeEditVariablesModal() {
+        editVariablesModal.classList.add('hidden');
+    }
+
+    // --- Anexação de Listeners ---
+
+    // Listener para o novo formulário
+    editVariablesForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const columnId = e.target.querySelector('#edit-variables-column-id').value;
+        const headersText = e.target.querySelector('#variables-textarea').value.trim();
+        
+        const headers = headersText.split(',').map(h => h.trim());
+
+        // Validação dos cabeçalhos customizados
+        if (headers[0].toLowerCase() !== 'telefone') {
+            alert("Erro: O primeiro campo deve ser 'telefone'.");
+            return;
+        }
+        for (let i = 1; i < headers.length; i++) {
+            if (isNaN(parseInt(headers[i], 10))) {
+                alert(`Erro: O campo '${headers[i]}' não é um número inteiro. Apenas o primeiro campo pode ser texto ('telefone').`);
+                return;
+            }
+        }
+
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (column) {
+            column.csvHeaders = headersText; // Salva o string de cabeçalhos no estado
+        }
+        
+        saveState();
+        closeEditVariablesModal();
+        alert("Variáveis de importação salvas com sucesso!");
+    });
+
+    cancelEditVariablesBtn.addEventListener('click', closeEditVariablesModal);
+
+
     // funçãp para processar o arquivo CSV
+    /*
     function processCsvFile(file, targetColumnId) {
         if (!file) return;
 
@@ -368,6 +475,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         reader.readAsText(file);
     }
+    */
         
     // --- Lógica do Modal e Event Listeners ---
 
