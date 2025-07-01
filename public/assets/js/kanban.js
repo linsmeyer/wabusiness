@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/kanban/send-message', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(card)
+                    body: JSON.stringify(card.data)
                 });
                 
                 if (response.ok) {
@@ -325,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`Erro: O arquivo CSV tem ${fileHeaders.length} colunas, mas você definiu ${headersToUse.length} variáveis.`);
                 return;
             }
+            
             if (headersToUse[0].toLowerCase() !== 'telefone') {
                 alert("Erro: A primeira variável (cabeçalho) definida para esta coluna deve ser 'telefone'.");
                 return;
@@ -338,6 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
                 const rowData = {};
+
                 headersToUse.forEach((header, index) => {
                     rowData[header] = values[index] ? values[index].trim() : '';
                 });

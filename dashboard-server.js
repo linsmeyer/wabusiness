@@ -36,6 +36,9 @@ app.post('/api/kanban/send-message', (req, res) => {
         return res.status(400).json({ success: false, error: 'Dados do card inválidos.' });
     }
 
+
+    console.log(JSON.stringify(cardData));
+
     console.log(`[KANBAN-SEND] Recebido para processar: ${cardData.telefone}`);
     
     // Simula um tempo de processamento/envio de rede (entre 200ms e 700ms)
