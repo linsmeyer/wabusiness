@@ -2,13 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const boardContainer = document.getElementById('kanban-board');
     const csvFileInput = document.getElementById('csv-file-input');
-    const addColumnBtn = document.getElementById('add-column-btn');
     const searchInput = document.getElementById('kanban-search');
     const KANBAN_STATE_KEY = 'kanban-board-state';
-
-    // --- Seleção de Elementos ---
-    const editColumnModal = document.getElementById('edit-column-modal');
-    const editColumnForm = document.getElementById('edit-column-form');
     const cancelEditColumnBtn = document.getElementById('cancel-edit-column-btn');
     const colorPalette = document.getElementById('color-palette');
 
@@ -17,7 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const editVariablesForm = document.getElementById('edit-variables-form');
     const cancelEditVariablesBtn = document.getElementById('cancel-edit-variables-btn');
 
-    // ... (estado global boardState)
+    const addColumnBtn = document.getElementById('add-column-btn');
+    const editColumnModal = document.getElementById('edit-column-modal');
+    const editColumnForm = document.getElementById('edit-column-form');
+
 
     // --- Paleta de Cores e Configuração ---
     const PALETTE = [
@@ -30,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['bg-purple-400', 'bg-purple-100'], ['dark:bg-purple-800', 'dark:bg-purple-900'],
     ];
 
-
+    // ... (estado global boardState)
     let boardState = {
         columns: []
     };
@@ -161,79 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`Informações do Card:\n\n${cardDetails}`);
     }
 
-    // --- Inicialização e Anexação de Listeners ---
-
-    // Adiciona delegação de eventos ao container do quadro Kanban
-    boardContainer.addEventListener('click', (e) => {
-        const target = e.target.closest('[data-action]');
-        if (!target) return;
-
-        e.stopPropagation();
-        
-        const action = target.dataset.action;
-        const columnId = target.closest('.kanban-column').dataset.columnId;
-        const columnEl = target.closest('.kanban-column');
-        const cardEl = target.closest('.kanban-card');
-
-        if (action === 'toggle-column-menu') {
-            toggleColumnMenu(target);
-        }
-        
-        if (action === 'remove-column') {
-            removeColumn(columnId);
-        }
-
-        // NOVO CASE para a ação de carregar CSV
-        if (action === 'load-contacts-csv') {
-            // Guarda o ID da coluna de destino no input e o aciona
-            csvFileInput.dataset.targetColumnId = columnId;
-            csvFileInput.click();
-            // Fecha o menu
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-
-        // Ações de Card
-        if (cardEl) {
-            const cardId = cardEl.dataset.cardId;
-            const columnId = columnEl.dataset.columnId;
-
-            if (action === 'remove-card') {
-                removeCard(cardId, columnId);
-            }
-            if (action === 'show-card-info') {
-                showCardInfo(cardId, columnId);
-            }
-        }
-
-        // Ações de edição de coluna
-        if (action === 'edit-column-name') {
-            openEditModal(columnId);
-            // Fecha o menu dropdown
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-
-        // NOVO CASE para a ação de editar variáveis
-        if (action === 'edit-variables') {
-            openEditVariablesModal(columnId);
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
-        }
-    });
-
-    // Listener global para fechar os menus ao clicar fora deles
-    document.addEventListener('click', (e) => {
-        // Se o clique não foi em um botão que abre um menu
-        if (!e.target.closest('[data-action="toggle-column-menu"]')) {
-            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-    });
-
-    function createCardElement(card) {
+        function createCardElement(card) {
         const cardEl = document.createElement('div');
         // Adicionamos a classe 'group' para que o CSS ':hover' funcione nos filhos
         cardEl.className = 'kanban-card group'; 
@@ -264,55 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         return cardEl;
     }
-
-    // --- Lógica Principal ---
-
-    function initializeDragAndDrop() {
-        const cardLists = boardContainer.querySelectorAll('.kanban-card-list');
-        cardLists.forEach(list => {
-            new Sortable(list, {
-                group: 'kanban-cards',
-                animation: 150,
-                ghostClass: 'sortable-ghost',
-                onEnd: (evt) => {
-                    const cardId = evt.item.dataset.cardId;
-                    const fromColumnId = evt.from.closest('.kanban-column').dataset.columnId;
-                    const toColumnId = evt.to.closest('.kanban-column').dataset.columnId;
-                    
-                    // Encontra a coluna de origem e o card
-                    const fromColumn = boardState.columns.find(c => c.id === fromColumnId);
-                    const cardIndex = fromColumn.cards.findIndex(c => c.id === cardId);
-                    const [movedCard] = fromColumn.cards.splice(cardIndex, 1);
-
-                    // Adiciona o card à nova coluna na posição correta
-                    const toColumn = boardState.columns.find(c => c.id === toColumnId);
-                    toColumn.cards.splice(evt.newDraggableIndex, 0, movedCard);
-                    
-                    saveState();
-                }
-            });
-        });
-    }
-
-    async function initializeBoard() {
-        loadState();
-        
-        // Se a primeira coluna estiver vazia, busca os leads
-        if (boardState.columns.length > 0 && boardState.columns[0].cards.length === 0) {
-            try {
-                const response = await fetch('/api/kanban-leads');
-                const leads = await response.json();
-                boardState.columns[0].cards = leads;
-                saveState();
-            } catch (error) {
-                console.error("Erro ao carregar leads iniciais:", error);
-            }
-        }
-        
-        renderBoard();
-    }
-
-
 
     // FUNÇÃO processCsvFile MODIFICADA
     function processCsvFile(file, targetColumnId) {
@@ -389,200 +266,45 @@ document.addEventListener('DOMContentLoaded', () => {
         editVariablesModal.classList.add('hidden');
     }
 
-    // --- Anexação de Listeners ---
-
-    // Listener para o novo formulário
-    editVariablesForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const columnId = e.target.querySelector('#edit-variables-column-id').value;
-        const headersText = e.target.querySelector('#variables-textarea').value.trim();
         
-        const headers = headersText.split(',').map(h => h.trim());
-
-        // Validação dos cabeçalhos customizados
-        if (headers[0].toLowerCase() !== 'telefone') {
-            alert("Erro: O primeiro campo deve ser 'telefone'.");
-            return;
-        }
-        for (let i = 1; i < headers.length; i++) {
-            if (isNaN(parseInt(headers[i], 10))) {
-                alert(`Erro: O campo '${headers[i]}' não é um número inteiro. Apenas o primeiro campo pode ser texto ('telefone').`);
-                return;
-            }
-        }
-
-        const column = boardState.columns.find(c => c.id === columnId);
-        if (column) {
-            column.csvHeaders = headersText; // Salva o string de cabeçalhos no estado
-        }
+    // Função openEditModal MODIFICADA para lidar com criação e edição
+    function openEditModal(columnId = null) { // Agora aceita um columnId nulo para criar
+        const form = editColumnForm;
+        // const modal = modalAddColumn;
+        form.reset();
         
-        saveState();
-        closeEditVariablesModal();
-        alert("Variáveis de importação salvas com sucesso!");
-    });
+        // Remove a seleção de cor anterior
+        colorPalette.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('selected'));
 
-    cancelEditVariablesBtn.addEventListener('click', closeEditVariablesModal);
-
-
-    // funçãp para processar o arquivo CSV
-    /*
-    function processCsvFile(file, targetColumnId) {
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const text = event.target.result;
-            const lines = text.split(/\r\n|\n/);
-            const headers = lines[0].split(',').map(h => h.trim());
-
-            // Validação: verifica se a primeira coluna é 'telefone'
-            if (headers[0].toLowerCase() !== 'telefone') {
-                alert("Erro: O arquivo CSV deve ter 'telefone' como a primeira coluna.");
-                return;
-            }
-
-            const newCards = [];
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i]) continue; // Ignora linhas vazias
-
-                const values = lines[i].split(',');
-                const rowData = {};
-                headers.forEach((header, index) => {
-                    rowData[header] = values[index] ? values[index].trim() : '';
-                });
-                
-                // Cria um novo card com os dados mapeados
-                const newCard = {
-                    id: `card-${rowData.telefone}-${Math.random().toString(36).substr(2, 9)}`,
-                    telefone: rowData.telefone,
-                    // O nome do card será a coluna '1' (antigo 'nome'), se existir.
-                    nome: rowData['1'] || rowData.telefone, 
-                    // Armazena todos os outros dados para referência futura, se necessário
-                    data: rowData
-                };
-                newCards.push(newCard);
-            }
-
-            // Adiciona os novos cards à coluna de destino no estado da aplicação
-            const targetColumn = boardState.columns.find(c => c.id === targetColumnId);
-            if (targetColumn) {
-                targetColumn.cards.push(...newCards);
-                saveState();
-                renderBoard();
-                alert(`${newCards.length} contato(s) carregado(s) com sucesso na coluna "${targetColumn.title}"!`);
-            }
-        };
-
-        reader.readAsText(file);
-    }
-    */
-        
-    // --- Lógica do Modal e Event Listeners ---
-
-    function openEditModal(columnId) {
-        const column = boardState.columns.find(c => c.id === columnId);
-        if (!column) return;
-        
-        // Preenche o formulário com os dados atuais da coluna
-        editColumnForm.querySelector('#edit-column-id').value = column.id;
-        editColumnForm.querySelector('#edit-column-name').value = column.title;
-        
-        // Renderiza a paleta de cores
-        colorPalette.innerHTML = '';
-        PALETTE.forEach((colorPair, index) => {
-            if(index % 2 !== 0) return; // Pula as cores do modo dark
+        if (columnId) {
+            // MODO DE EDIÇÃO
+            const column = boardState.columns.find(c => c.id === columnId);
+            if (!column) return;
             
-            const swatch = document.createElement('button');
-            swatch.type = 'button';
-            swatch.className = `color-swatch ${colorPair[0]} dark:${PALETTE[index+1][0]}`;
-            swatch.dataset.colorIndex = index;
+            form.querySelector('#modal-title').textContent = 'Editar Coluna';
+            form.querySelector('#edit-column-id').value = column.id;
+            form.querySelector('#edit-column-name').value = column.title;
             
-            // Marca a cor atual como selecionada
-            if (column.color && column.color[0] === colorPair[0]) {
-                swatch.classList.add('selected');
+            // Marca a cor atual como selecionada, se existir
+            if (column.color) {
+                const colorIndex = PALETTE.findIndex(p => p[0] === column.color[0]);
+                const swatch = colorPalette.querySelector(`[data-color-index="${colorIndex}"]`);
+                if (swatch) swatch.classList.add('selected');
             }
-            
-            colorPalette.appendChild(swatch);
-        });
 
+        } else {
+            // MODO DE CRIAÇÃO
+            form.querySelector('#modal-title').textContent = 'Adicionar Nova Coluna';
+            form.querySelector('#edit-column-id').value = ''; // Garante que o ID esteja vazio
+            form.querySelector('#edit-column-name').value = ''; // Limpa o nome
+        }
+        
         editColumnModal.classList.remove('hidden');
     }
-    
+
     function closeEditModal() {
         editColumnModal.classList.add('hidden');
     }
-
-    // --- Event Listeners ---
-
-
-    // Listener para seleção de cor na paleta
-    colorPalette.addEventListener('click', (e) => {
-        if (e.target.classList.contains('color-swatch')) {
-            // Remove a seleção de qualquer outra cor
-            colorPalette.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('selected'));
-            // Adiciona a seleção à cor clicada
-            e.target.classList.add('selected');
-        }
-    });
-
-    // Listener para o formulário de edição
-    editColumnForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const columnId = e.target.querySelector('#edit-column-id').value;
-        const newTitle = e.target.querySelector('#edit-column-name').value;
-        const selectedSwatch = e.target.querySelector('.color-swatch.selected');
-        
-        const column = boardState.columns.find(c => c.id === columnId);
-        if (column) {
-            column.title = newTitle.trim();
-            if (selectedSwatch) {
-                const colorIndex = parseInt(selectedSwatch.dataset.colorIndex);
-                // Salva a cor do modo claro e o JS deduzirá a do modo escuro
-                column.color = PALETTE[colorIndex];
-            }
-        }
-
-        saveState();
-        renderBoard();
-        closeEditModal();
-    });
-
-    cancelEditColumnBtn.addEventListener('click', closeEditModal);
-    
-
-    // Listener para o input de arquivo oculto
-    csvFileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        const targetColumnId = csvFileInput.dataset.targetColumnId; // Pega o ID da coluna que acionou
-        if (file && targetColumnId) {
-            processCsvFile(file, targetColumnId);
-        }
-        // Reseta o input para permitir selecionar o mesmo arquivo novamente
-        event.target.value = '';
-    });
-
-    addColumnBtn.addEventListener('click', () => {
-        const columnName = prompt("Digite o nome da nova coluna:");
-        if (columnName && columnName.trim()) {
-            boardState.columns.push({
-                id: `col-${Date.now()}`,
-                title: columnName.trim(),
-                cards: []
-            });
-            saveState();
-            renderBoard();
-        }
-    });
-
-    searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        document.querySelectorAll('.kanban-card').forEach(card => {
-            const cardText = card.textContent.toLowerCase();
-            card.style.display = cardText.includes(query) ? '' : 'none';
-        });
-    });
-
-
 
     function initializeDragAndDrop() {
         
@@ -628,7 +350,217 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     // --- Inicialização ---
+    // A função initializeBoard precisa renderizar a paleta uma vez na carga
+    async function initializeBoard() {
+        // Renderiza a paleta de cores no modal uma vez
+        PALETTE.forEach((colorPair, index) => {
+            if(index % 2 === 0) { // Apenas cores do modo claro
+                const swatch = document.createElement('button');
+                swatch.type = 'button';
+                swatch.className = `color-swatch ${colorPair[0]} dark:${PALETTE[index+1][0]}`;
+                swatch.dataset.colorIndex = index;
+                colorPalette.appendChild(swatch);
+            }
+        });
+        
+        loadState();
+        
+        if (boardState.columns.length > 0 && boardState.columns[0].cards.length === 0) {
+            try {
+                const response = await fetch('/api/kanban-leads');
+                const leads = await response.json();
+                boardState.columns[0].cards = leads;
+                saveState();
+            } catch (error) {
+                console.error("Erro ao carregar leads iniciais:", error);
+            }
+        }
+        
+        renderBoard();
+    }
+
+    // --- Inicialização e Anexação de Listeners ---
+
+    // Adiciona delegação de eventos ao container do quadro Kanban
+    boardContainer.addEventListener('click', (e) => {
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+
+        e.stopPropagation();
+        
+        const action = target.dataset.action;
+        const columnId = target.closest('.kanban-column').dataset.columnId;
+        const columnEl = target.closest('.kanban-column');
+        const cardEl = target.closest('.kanban-card');
+
+        if (action === 'toggle-column-menu') {
+            toggleColumnMenu(target);
+        }
+        
+        if (action === 'remove-column') {
+            removeColumn(columnId);
+        }
+
+        // NOVO CASE para a ação de carregar CSV
+        if (action === 'load-contacts-csv') {
+            // Guarda o ID da coluna de destino no input e o aciona
+            csvFileInput.dataset.targetColumnId = columnId;
+            csvFileInput.click();
+            // Fecha o menu
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+
+        // Ações de Card
+        if (cardEl) {
+            const cardId = cardEl.dataset.cardId;
+            const columnId = columnEl.dataset.columnId;
+
+            if (action === 'remove-card') {
+                removeCard(cardId, columnId);
+            }
+            if (action === 'show-card-info') {
+                showCardInfo(cardId, columnId);
+            }
+        }
+
+        // Ações de edição de coluna
+        if (action === 'edit-column-name') {
+            // Chama a mesma função de modal, mas passando o ID para editar
+            openEditModal(columnId);
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+        }
+
+        // NOVO CASE para a ação de editar variáveis
+        if (action === 'edit-variables') {
+            openEditVariablesModal(columnId);
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => menu.classList.add('hidden'));
+        }
+    });
+
+    // Listener global para fechar os menus ao clicar fora deles
+    document.addEventListener('click', (e) => {
+        // Se o clique não foi em um botão que abre um menu
+        if (!e.target.closest('[data-action="toggle-column-menu"]')) {
+            document.querySelectorAll('.column-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+
+
+    // Listener para o novo formulário
+    editVariablesForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const columnId = e.target.querySelector('#edit-variables-column-id').value;
+        const headersText = e.target.querySelector('#variables-textarea').value.trim();
+        
+        const headers = headersText.split(',').map(h => h.trim());
+
+        // Validação dos cabeçalhos customizados
+        if (headers[0].toLowerCase() !== 'telefone') {
+            alert("Erro: O primeiro campo deve ser 'telefone'.");
+            return;
+        }
+        for (let i = 1; i < headers.length; i++) {
+            if (isNaN(parseInt(headers[i], 10))) {
+                alert(`Erro: O campo '${headers[i]}' não é um número inteiro. Apenas o primeiro campo pode ser texto ('telefone').`);
+                return;
+            }
+        }
+
+        const column = boardState.columns.find(c => c.id === columnId);
+        if (column) {
+            column.csvHeaders = headersText; // Salva o string de cabeçalhos no estado
+        }
+        
+        saveState();
+        closeEditVariablesModal();
+        alert("Variáveis de importação salvas com sucesso!");
+    });
+
+    cancelEditVariablesBtn.addEventListener('click', closeEditVariablesModal);
+
+
+    // Listener do formulário de edição MODIFICADO para lidar com criação e edição
+    editColumnForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const columnId = e.target.querySelector('#edit-column-id').value;
+        const newTitle = e.target.querySelector('#edit-column-name').value.trim();
+        const selectedSwatch = e.target.querySelector('.color-swatch.selected');
+        
+        if (!newTitle) {
+            alert("O nome da coluna não pode ser vazio.");
+            return;
+        }
+
+        let selectedColor = null;
+        if (selectedSwatch) {
+            const colorIndex = parseInt(selectedSwatch.dataset.colorIndex);
+            selectedColor = PALETTE[colorIndex];
+        }
+
+        if (columnId) {
+            // Atualiza uma coluna existente
+            const column = boardState.columns.find(c => c.id === columnId);
+            if (column) {
+                column.title = newTitle;
+                column.color = selectedColor;
+            }
+        } else {
+            // Cria uma nova coluna
+            boardState.columns.push({
+                id: `col-${Date.now()}`,
+                title: newTitle,
+                cards: [],
+                color: selectedColor, // Salva a cor selecionada
+                csvHeaders: 'telefone,1,2,3' // Define um padrão de variáveis
+            });
+        }
+
+        saveState();
+        renderBoard();
+        closeEditModal();
+    });
+
+    // Listener para seleção de cor na paleta
+    colorPalette.addEventListener('click', (e) => {
+        if (e.target.classList.contains('color-swatch')) {
+            // Remove a seleção de qualquer outra cor
+            colorPalette.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('selected'));
+            // Adiciona a seleção à cor clicada
+            e.target.classList.add('selected');
+        }
+    });
+
+    cancelEditColumnBtn.addEventListener('click', closeEditModal);
+
+    // Listener para o input de arquivo oculto
+    csvFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        const targetColumnId = csvFileInput.dataset.targetColumnId; // Pega o ID da coluna que acionou
+        if (file && targetColumnId) {
+            processCsvFile(file, targetColumnId);
+        }
+        // Reseta o input para permitir selecionar o mesmo arquivo novamente
+        event.target.value = '';
+    });
+
+    addColumnBtn.addEventListener('click', () => {
+        // Simplesmente abre o modal em modo de criação (sem passar um ID)
+        openEditModal();
+    });
+
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.kanban-card').forEach(card => {
+            const cardText = card.textContent.toLowerCase();
+            card.style.display = cardText.includes(query) ? '' : 'none';
+        });
+    });
+
     initializeBoard();
+
 });
