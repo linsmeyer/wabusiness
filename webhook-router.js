@@ -174,14 +174,16 @@ TESTES VIA cURL:
 */
 
 
-require('dotenv').config();
+// require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = 'path';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+// PRD
+// const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const VERIFY_TOKEN = "MEU_TOKEN_SECRETO_PARA_O_WHATSAPP_12345";
 
 // Middleware para parsing de JSON
 app.use(express.json());
@@ -320,7 +322,9 @@ app.post('/whatsapp', async (req, res) => {
             // Aqui está a mágica: redirecionamos internamente a requisição.
             // Usamos uma chamada `fetch` para o nosso próprio servidor.
             // Isso mantém o código limpo e desacoplado.
-            try {
+            try { 
+                //  production
+                // await fetch(`https://www.campanhadoaparelho.com.br/process/${field}`, {
                 await fetch(`http://localhost:${PORT}/process/${field}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -342,5 +346,5 @@ app.get('/', (req, res) => res.send('Servidor Webhook Router está online!'));
 
 app.listen(PORT, () => {
     console.log(`Servidor escutando na porta ${PORT}`);
-    console.log(`Configure a URL de callback na Meta para: https://<sua-url-ngrok>/whatsapp`);
+    console.log(`Configure a URL de callback na Meta para: https://www.campanhadoaparelho.com.br/whatsapp`);
 });

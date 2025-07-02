@@ -35,12 +35,26 @@ app.post('/api/kanban/send-message', (req, res) => {
     if (!cardData || !cardData.telefone) {
         return res.status(400).json({ success: false, error: 'Dados do card inválidos.' });
     }
-
-
-    console.log(JSON.stringify(cardData));
-
-    console.log(`[KANBAN-SEND] Recebido para processar: ${cardData.telefone}`);
     
+    // Monta uma string com todos os dados do card para o alert
+    // 1. Filtra as chaves do objeto para pegar apenas as que são números inteiros.
+    const paramKeys = Object.keys(cardData)
+        .filter(key => !isNaN(parseInt(key, 10))) // Checa se a chave é um número
+        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10)); // Ordena as chaves numericamente (1, 2, 3...)
+
+    // 2. Cria o array de parâmetros na ordem correta.
+    const params = paramKeys.map(key => cardData[key]);
+
+    // 3. Monta o novo JSON formatado.
+    const formattedJson = {
+        telefone: cardData.telefone,
+        params: params
+    };
+    // --- Fim da Lógica de Transformação ---
+
+    console.log(`[KANBAN-SEND] Recebido card para: ${cardData.telefone}`);
+    console.log(`[KANBAN-SEND] JSON Formatado para envio:`, JSON.stringify(formattedJson, null, 2));
+        
     // Simula um tempo de processamento/envio de rede (entre 200ms e 700ms)
     const delay = Math.random() * 500 + 200; 
 

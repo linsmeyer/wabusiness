@@ -280,7 +280,8 @@ const API_VERSION = 'v18.0'; // Use a versão mais recente da API
 
 // Configuração do Axios para a API da Meta
 const metaApi = axios.create({
-    baseURL: `https://graph.facebook.com/${API_VERSION}`,
+    // baseURL: `https://graph.facebook.com/${API_VERSION}`,
+    baseURL: `http://localhost:8081/${API_VERSION}`,
     headers: {
         'Authorization': `Bearer ${META_ACCESS_TOKEN}`,
         'Content-Type': 'application/json',
@@ -334,7 +335,7 @@ app.delete('/templates/:templateName', async (req, res) => {
     }
 });
 
-
+/* MOCK API SERVER */
 
 // --- BANCO DE DADOS EM MEMÓRIA ---
 let DB = {

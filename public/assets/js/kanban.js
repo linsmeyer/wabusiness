@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const editColumnForm = document.getElementById('edit-column-form');
 
 
+    // --- Seleção de Elementos ---
+    const editColumnTemplateSelect = document.getElementById('edit-column-template');
+    // ... (outros elementos)
+
+    // --- Estado Global e Configuração ---
+    let allTemplatesData = []; // Novo estado para armazenar os templates da API
+
+
     // --- Paleta de Cores e Configuração ---
     const PALETTE = [
         // [cor do header, cor do fundo da lista]
@@ -132,10 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Estado inicial se não houver nada salvo
             boardState = {
                 columns: [
-                    { id: `col-${Date.now()}`, title: "Remarcação", cards: [] },
-                    { id: `col-${Date.now()+1}`, title: "Vencimento", cards: [] },
-                    { id: `col-${Date.now()+2}`, title: "Cobrança", cards: [] },,
-                    { id: `col-${Date.now()+3}`, title: "Confirmação", cards: [] },
+                    { id: `col-${Date.now()}`, title: "Remarcação", cards: [], color: ["bg-blue-400", "bg-blue-100"], templateName: "boas_vindas" },
+                    { id: `col-${Date.now()+1}`, title: "Vencimento", cards: [], color: ["bg-yellow-400", "bg-yellow-100"], templateName: "boas_vindas" },
+                    { id: `col-${Date.now()+2}`, title: "Cobrança", cards: [], color: ["bg-red-400", "bg-red-100"], templateName: "boas_vindas" },
+                    { id: `col-${Date.now()+3}`, title: "Confirmação", cards: [], color: ["bg-green-400", "bg-green-100"], templateName: "boas_vindas" },
                 ]
             };
         }
@@ -390,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         editVariablesForm.querySelector('#edit-variables-column-id').value = column.id;
         // Preenche com as variáveis salvas ou com o padrão
-        editVariablesForm.querySelector('#variables-textarea').value = column.csvHeaders || 'telefone,1,2,3,4';
+        editVariablesForm.querySelector('#variables-textarea').value = column.csvHeaders || 'telefone,1,2,3';
         
         editVariablesModal.classList.remove('hidden');
     }
@@ -409,31 +417,120 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove a seleção de cor anterior
         colorPalette.querySelectorAll('.color-swatch').forEach(sw => sw.classList.remove('selected'));
 
-        if (columnId) {
-            // MODO DE EDIÇÃO
-            const column = boardState.columns.find(c => c.id === columnId);
-            if (!column) return;
-            
-            form.querySelector('#modal-title').textContent = 'Editar Coluna';
-            form.querySelector('#edit-column-id').value = column.id;
-            form.querySelector('#edit-column-name').value = column.title;
-            
-            // Marca a cor atual como selecionada, se existir
-            if (column.color) {
-                const colorIndex = PALETTE.findIndex(p => p[0] === column.color[0]);
-                const swatch = colorPalette.querySelector(`[data-color-index="${colorIndex}"]`);
-                if (swatch) swatch.classList.add('selected');
-            }
+        // Busca e popula os templates ao abrir o modal
+        fetchAndPopulateTemplates().then(() => {
+            // Após popular, seleciona o template salvo para a coluna, se houver
+            if (columnId) {
+                // MODO DE EDIÇÃO
+                const column = boardState.columns.find(c => c.id === columnId);
+                if (!column) return;
+                
+                form.querySelector('#modal-title').textContent = 'Editar Coluna';
+                form.querySelector('#edit-column-id').value = column.id;
+                form.querySelector('#edit-column-name').value = column.title;
+                
+                // Marca a cor atual como selecionada, se existir
+                if (column.color) {
+                    const colorIndex = PALETTE.findIndex(p => p[0] === column.color[0]);
+                    const swatch = colorPalette.querySelector(`[data-color-index="${colorIndex}"]`);
+                    if (swatch) swatch.classList.add('selected');
+                }
 
-        } else {
-            // MODO DE CRIAÇÃO
-            form.querySelector('#modal-title').textContent = 'Adicionar Nova Coluna';
-            form.querySelector('#edit-column-id').value = ''; // Garante que o ID esteja vazio
-            form.querySelector('#edit-column-name').value = ''; // Limpa o nome
-        }
-        
+                if (column && column.templateName) {
+                    editColumnTemplateSelect.value = column.templateName;
+                }
+
+            } else {
+                // MODO DE CRIAÇÃO
+                form.querySelector('#modal-title').textContent = 'Adicionar Nova Coluna';
+                form.querySelector('#edit-column-id').value = ''; // Garante que o ID esteja vazio
+                form.querySelector('#edit-column-name').value = ''; // Limpa o nome
+            }
+        });
+
         editColumnModal.classList.remove('hidden');
     }
+
+    // NOVA FUNÇÃO para buscar e popular templates
+    async function fetchAndPopulateTemplates() {
+        // URL do seu mock ou da API real de templates
+        const TEMPLATES_API_ENDPOINT = 'http://localhost:8081/v18.0/123456789012345/message_templates';
+        
+        try {
+            editColumnTemplateSelect.innerHTML = '<option value="">Carregando...</option>';
+            editColumnTemplateSelect.disabled = true;
+
+            const response = await fetch(TEMPLATES_API_ENDPOINT);
+            if (!response.ok) throw new Error('Falha ao buscar templates.');
+            
+            const jsonResponse = await response.json();
+            allTemplatesData = jsonResponse.data; // Armazena todos os dados dos templates
+
+            const approvedTemplates = allTemplatesData.filter(t => t.status === 'APPROVED');
+            
+            editColumnTemplateSelect.innerHTML = '<option value="">Selecione um template...</option>';
+            approvedTemplates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.name;
+                option.textContent = template.name;
+                editColumnTemplateSelect.appendChild(option);
+            });
+
+            editColumnTemplateSelect.disabled = false;
+
+        } catch (error) {
+            console.error("Erro ao buscar templates:", error);
+            editColumnTemplateSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
+    }
+
+    // NOVA FUNÇÃO para analisar variáveis e gerar cabeçalhos
+    function generateCsvHeadersFromTemplate(templateName) {
+        const template = allTemplatesData.find(t => t.name === templateName);
+        if (!template) return 'telefone,1,2,3'; // Padrão de fallback
+
+        const variables = new Set();
+        const regex = /{{(\d+)}}/g;
+
+        template.components.forEach(component => {
+            // Analisa o BODY
+            if (component.type === 'BODY' && component.text) {
+                let match;
+                while ((match = regex.exec(component.text)) !== null) {
+                    variables.add(parseInt(match[1]));
+                }
+            }
+            // Analisa o HEADER, se for do tipo TEXT
+            if (component.type === 'HEADER' && component.format === 'TEXT' && component.text) {
+                let match;
+                while ((match = regex.exec(component.text)) !== null) {
+                    variables.add(parseInt(match[1]));
+                }
+            }
+        });
+        
+        // Ordena as variáveis numericamente e cria a string final
+        const sortedVars = Array.from(variables).sort((a, b) => a - b);
+        const headers = ['telefone', ...sortedVars];
+        
+        return headers.join(',');
+    }
+
+
+
+    // NOVO: Listener para o seletor de templates
+    editColumnTemplateSelect.addEventListener('change', (e) => {
+        const selectedTemplateName = e.target.value;
+        const variablesTextarea = document.getElementById('variables-textarea'); // Supondo que você tenha este elemento no modal
+
+        if (selectedTemplateName && variablesTextarea) {
+            // Gera os cabeçalhos com base no template selecionado e preenche o textarea
+            const generatedHeaders = generateCsvHeadersFromTemplate(selectedTemplateName);
+            variablesTextarea.value = generatedHeaders;
+        } else if (variablesTextarea) {
+            variablesTextarea.value = ''; // Limpa se nenhum template for selecionado
+        }
+    });
 
     function closeEditModal() {
         editColumnModal.classList.add('hidden');
@@ -634,7 +731,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const columnId = e.target.querySelector('#edit-column-id').value;
         const newTitle = e.target.querySelector('#edit-column-name').value.trim();
         const selectedSwatch = e.target.querySelector('.color-swatch.selected');
-        
+
+        const selectedTemplate = e.target.querySelector('#edit-column-template').value;
+        const variablesString = document.getElementById('variables-textarea')?.value; // Pega as variáveis se o campo existir
+
         if (!newTitle) {
             alert("O nome da coluna não pode ser vazio.");
             return;
@@ -646,24 +746,33 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedColor = PALETTE[colorIndex];
         }
 
+        // Validação para garantir que um template foi selecionado
+        if (!selectedTemplate) {
+            alert("Por favor, selecione um template padrão para a coluna.");
+            return;
+        }
+
         if (columnId) {
-            // Atualiza uma coluna existente
+            // Atualiza coluna existente
             const column = boardState.columns.find(c => c.id === columnId);
             if (column) {
                 column.title = newTitle;
                 column.color = selectedColor;
+                column.templateName = selectedTemplate; // Salva o nome do template
+                if (variablesString) column.csvHeaders = variablesString; // Salva as variáveis
             }
         } else {
-            // Cria uma nova coluna
+            // Cria nova coluna
             boardState.columns.push({
                 id: `col-${Date.now()}`,
                 title: newTitle,
                 cards: [],
                 color: selectedColor, // Salva a cor selecionada
-                csvHeaders: 'telefone,1,2,3,4' // Define um padrão de variáveis
+                templateName: selectedTemplate, // Salva o nome do template
+                csvHeaders: variablesString || generateCsvHeadersFromTemplate(selectedTemplate) // Usa as variáveis geradas
             });
         }
-
+        
         saveState();
         renderBoard();
         closeEditModal();
