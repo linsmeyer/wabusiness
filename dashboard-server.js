@@ -36,6 +36,8 @@ app.post('/api/kanban/send-message', (req, res) => {
         return res.status(400).json({ success: false, error: 'Dados do card inválidos.' });
     }
     
+    // console.log(JSON.stringify(cardData));
+
     // Monta uma string com todos os dados do card para o alert
     // 1. Filtra as chaves do objeto para pegar apenas as que são números inteiros.
     const paramKeys = Object.keys(cardData)
@@ -48,6 +50,7 @@ app.post('/api/kanban/send-message', (req, res) => {
     // 3. Monta o novo JSON formatado.
     const formattedJson = {
         telefone: cardData.telefone,
+        template_id: cardData.template_id,
         params: params
     };
     // --- Fim da Lógica de Transformação ---

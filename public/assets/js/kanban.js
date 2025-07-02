@@ -56,6 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const column = boardState.columns.find(c => c.id === columnId);
         if (!column) return;
 
+        // Validação crucial: verifica se a coluna tem um template associado
+        if (!column.templateId || !column.templateName) {
+            alert(`A coluna "${column.title}" não tem um template selecionado. Por favor, edite a coluna e escolha um template antes de enviar.`);
+            return;
+        }
+
         const cardsToSend = column.cards.filter(card => !card.processed);
         if (cardsToSend.length === 0) {
             alert("Todos os contatos nesta coluna já foram processados.");
@@ -82,11 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             progressStatus.textContent = `Enviando para ${card.nome || card.telefone}...`;
 
+            // console.log(JSON.stringify(column));
+
+            // const paramKeys = (column.csvHeaders || 'telefone').split(',').map(h => h.trim()).slice(1); // Pega as chaves numéricas
+            // console.log(paramKeys);
+
+            // const params = paramKeys.map(key => card.data[key] || '');
+            let payload = JSON.parse(JSON.stringify(card.data));
+            payload.template_id = column.templateId;
+
             try {
                 const response = await fetch('/api/kanban/send-message', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(card.data)
+                    body: JSON.stringify(payload)
                 });
                 
                 if (response.ok) {
@@ -140,10 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
             // Estado inicial se não houver nada salvo
             boardState = {
                 columns: [
-                    { id: `col-${Date.now()}`, title: "Remarcação", cards: [], color: ["bg-blue-400", "bg-blue-100"], templateName: "boas_vindas" },
-                    { id: `col-${Date.now()+1}`, title: "Vencimento", cards: [], color: ["bg-yellow-400", "bg-yellow-100"], templateName: "boas_vindas" },
-                    { id: `col-${Date.now()+2}`, title: "Cobrança", cards: [], color: ["bg-red-400", "bg-red-100"], templateName: "boas_vindas" },
-                    { id: `col-${Date.now()+3}`, title: "Confirmação", cards: [], color: ["bg-green-400", "bg-green-100"], templateName: "boas_vindas" },
+                    { id: `col-${Date.now()}`, title: "Remarcação", cards: [], color: ["bg-blue-400", "bg-blue-100"], templateId: "986238472384722", templateName: "status_pedido", csvHeaders: "telefone,1,2,3" },
+                    { id: `col-${Date.now()+1}`, title: "Vencimento", cards: [], color: ["bg-yellow-400", "bg-yellow-100"], templateId: "986238472384722", templateName: "status_pedido", csvHeaders: "telefone,1,2,3" },
+                    { id: `col-${Date.now()+2}`, title: "Cobrança", cards: [], color: ["bg-red-400", "bg-red-100"], templateId: "986238472384722", templateName: "status_pedido", csvHeaders: "telefone,1,2,3" },
+                    { id: `col-${Date.now()+3}`, title: "Confirmação", cards: [], color: ["bg-green-400", "bg-green-100"], templateId: "986238472384722", templateName: "status_pedido", csvHeaders: "telefone,1,2,3" }
                 ]
             };
         }
@@ -751,6 +766,8 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Por favor, selecione um template padrão para a coluna.");
             return;
         }
+        
+        const selectedTemplateObject = allTemplatesData.find(t => t.name === selectedTemplate);
 
         if (columnId) {
             // Atualiza coluna existente
@@ -759,6 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 column.title = newTitle;
                 column.color = selectedColor;
                 column.templateName = selectedTemplate; // Salva o nome do template
+                column.templateId = selectedTemplateObject ? selectedTemplateObject.id : null; 
                 if (variablesString) column.csvHeaders = variablesString; // Salva as variáveis
             }
         } else {
@@ -769,6 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cards: [],
                 color: selectedColor, // Salva a cor selecionada
                 templateName: selectedTemplate, // Salva o nome do template
+                templateId: selectedTemplateObject ? selectedTemplateObject.id : null, 
                 csvHeaders: variablesString || generateCsvHeadersFromTemplate(selectedTemplate) // Usa as variáveis geradas
             });
         }
