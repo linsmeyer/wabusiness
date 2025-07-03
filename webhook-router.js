@@ -1,189 +1,13 @@
-// webhook-router.js
-
-/* INFORMAÇÕES DA ARQUITETURA DO PROJETO
-
-OBJETIVO: Webhook para escutar Payloads recebidos pela API da Meta.
-STATUS: AGUARDANDO IMPLANTAÇÃO
-TESTES VIA cURL:
-
-    Teste 1: Simular uma Mensagem Recebida (messages)
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{ "object": "whatsapp_business_account", "entry": [ { "changes": [ { "value": { "messages": [ { "from": "5511987654321", "text": { "body": "Olá, tudo bem?" }, "type": "text", "id": "wamid.123" } ] }, "field": "messages" } ] } ] }' \
-    http://localhost:3000/whatsapp
-    
-    Resultado: Um arquivo messages.csv será criado (ou atualizado) com a linha correspondente.
-    
-    Teste 2: Simular uma Mudança na Qualidade do Número (phone_number_quality_update)
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{ "object": "whatsapp_business_account", "entry": [ { "changes": [ { "value": { "event": "FLAGGED", "current_limit": "TIER_10K", "quality_score": { "score": "YELLOW" } }, "field": "phone_number_quality_update" } ] } ] }' \
-    http://localhost:3000/whatsapp
-    
-    Resultado: Um arquivo phone_number_quality_update.csv será criado.
-    
-    Teste 3: Simular a Aprovação de um Template (message_template_status_update)
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{ "object": "whatsapp_business_account", "entry": [ { "changes": [ { "value": { "event": "APPROVED", "message_template_name": "cupom_desconto", "message_template_language": "pt_BR" }, "field": "message_template_status_update" } ] } ] }' \
-    http://localhost:3000/whatsapp
-    
-    Resultado: Um arquivo message_template_status_update.csv será criado.
-
-    Teste 4: Simula uma notificação sobre a mudança na classificação de qualidade de um template específico, com base no feedback dos usuários.
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{
-    "object": "whatsapp_business_account",
-    "entry": [
-        {
-        "changes": [
-            {
-            "value": {
-                "event": "QUALITY_SCORE_UPDATE",
-                "message_template_name": "oferta_relampago",
-                "message_template_language": "pt_BR",
-                "previous_quality_score": "GREEN",
-                "new_quality_score": "YELLOW"
-            },
-            "field": "message_template_quality_update"
-            }
-        ]
-        }
-    ]
-    }' \
-    http://localhost:3000/whatsapp
-    
-    Ação: Simula que o template oferta_relampago teve uma queda na qualidade, provavelmente porque alguns usuários o bloquearam ou denunciaram.
-    Resultado Esperado: Criação/atualização do arquivo message_template_quality_update.csv.
-    
-    Teste 5: Simula uma notificação sobre a aprovação ou rejeição de uma solicitação para alterar o nome de exibição do seu número.
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{
-    "object": "whatsapp_business_account",
-    "entry": [
-        {
-        "changes": [
-            {
-            "value": {
-                "event": "APPROVED",
-                "display_phone_number": "+1 555-123-4567",
-                "new_display_name": "Sua Empresa Global Inc."
-            },
-            "field": "phone_number_name_update"
-            }
-        ]
-        }
-    ]
-    }' \
-    http://localhost:3000/whatsapp
-    
-    Ação: Simula que seu pedido para alterar o nome de exibição para "Sua Empresa Global Inc." foi aprovado pela Meta.
-    Resultado Esperado: Criação/atualização do arquivo phone_number_name_update.csv.
-    
-    Teste 6: Simula uma notificação de que sua conta passou por uma revisão de política.
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{
-    "object": "whatsapp_business_account",
-    "entry": [
-        {
-        "changes": [
-            {
-            "value": {
-                "event": "ACCOUNT_REVIEW_UPDATE",
-                "decision": "APPROVED",
-                "reasons": []
-            },
-            "field": "account_review_update"
-            }
-        ]
-        }
-    ]
-    }' \
-    http://localhost:3000/whatsapp
-    
-    Ação: Simula que a Meta revisou sua conta e concluiu que ela está em conformidade com as políticas.
-    Resultado Esperado: Criação/atualização do arquivo account_review_update.csv.
-    
-    Teste 7: Simula uma notificação de que um recurso importante da sua conta foi atualizado, como a ativação de uma conta de faturamento.
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{
-    "object": "whatsapp_business_account",
-    "entry": [
-        {
-        "changes": [
-            {
-            "value": {
-                "event": "BUSINESS_CAPABILITY_UPDATE",
-                "business_capability": {
-                "id": "123456789_capability_id",
-                "type": "PHONE_NUMBER_MESSAGING",
-                "status": "ACTIVE"
-                },
-                "new_capability_status": "ACTIVE"
-            },
-            "field": "business_capability_update"
-            }
-        ]
-        }
-    ]
-    }' \
-    http://localhost:3000/whatsapp
-    
-    Ação: Simula que a capacidade de envio de mensagens do seu número de telefone foi ativada, geralmente após adicionar um método de pagamento e sair do modo de teste.
-    Resultado Esperado: Criação/atualização do arquivo business_capability_update.csv.
-    
-    Teste 8: Teste de account_update (Banimento) Este é um teste importante para garantir que seu sistema está preparado para o pior cenário.
-    Comando cURL:
-    curl -X POST \
-    -H "Content-Type: application/json" \
-    -d '{
-    "object": "whatsapp_business_account",
-    "entry": [
-        {
-        "changes": [
-            {
-            "value": {
-                "event": "DISABLED_UPDATE",
-                "phone_number": "+1 555-123-4567",
-                "ban_info": {
-                "waba_ban_state": "SCHEDULE_FOR_DISABLE",
-                "waba_ban_date": "2024-01-15"
-                }
-            },
-            "field": "account_update"
-            }
-        ]
-        }
-    ]
-    }' \
-    http://localhost:3000/whatsapp
-    
-    Ação: Simula um aviso de que sua conta foi marcada para ser desativada em uma data futura devido a violações de política.
-    Resultado Esperado: Criação/atualização do arquivo account_update.csv com o evento SCHEDULE_FOR_DISABLE.
-*/
-
-
 // require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
-const path = 'path';
+const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-// PRD
-// const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const PORT = process.env.PORT || 5000;
 const VERIFY_TOKEN = "MEU_TOKEN_SECRETO_PARA_O_WHATSAPP_12345";
+
+const CSV_FILE_PATH = path.join('messages.csv');
 
 // Middleware para parsing de JSON
 app.use(express.json());
@@ -219,19 +43,174 @@ function appendToCsv(fileName, dataObject) {
 
 const processRouter = express.Router();
 
+// ==============================================================================
+// ==  FUNÇÃO AUXILIAR PARA FORMATAÇÃO DE LINHA CSV                            ==
+// ==============================================================================
+
+/**
+ * Formata um objeto de dados em uma linha de CSV, adicionando aspas
+ * apenas ao campo 'content'.
+ * @param {object} rowObject - O objeto a ser formatado.
+ * @param {string[]} headers - Um array com os nomes das colunas na ordem correta.
+ * @returns {string} - A linha formatada para o CSV.
+ */
+function formatCsvRow(rowObject, headers) {
+    return headers.map(header => {
+        const value = rowObject[header] || '';
+        if (header === 'content') {
+            // Escapa aspas existentes dentro do conteúdo e envolve com novas aspas
+            return `"${String(value).replace(/"/g, '""')}"`;
+        }
+        return String(value);
+    }).join(',');
+}
+
+// ==============================================================================
+// ==  ENDPOINT /log-message (CORRIGIDO)                                       ==
+// ==============================================================================
+app.post('/api/log-message', (req, res) => {
+    const { from, text, message_id, direction } = req.body;
+    if (!from || !text || !direction) return res.status(400).send('Dados insuficientes.');
+
+    const headers = ['timestamp', 'from', 'type', 'content', 'message_id', 'direction', 'is_read'];
+    
+    const newRowObject = {
+        timestamp: Math.floor(Date.now() / 1000),
+        from: from,
+        type: 'text',
+        content: text,
+        message_id: message_id,
+        direction: direction,
+        is_read: direction === 'out' ? 'true' : 'false'
+    };
+
+    const csvLine = formatCsvRow(newRowObject, headers) + '\n';
+     
+    const logLine = `${newRowObject.timestamp},${newRowObject.from},${newRowObject.type},"${newRowObject.content}",${newRowObject.message_id},${newRowObject.direction},${newRowObject.is_read}\n`;
+    
+    console.log('csvLine');
+    console.log(csvLine);
+    
+    // Se o arquivo não existe, cria com o cabeçalho (sem aspas)
+    if (!fs.existsSync(CSV_FILE_PATH)) {
+        fs.writeFileSync(CSV_FILE_PATH, headers.join(',') + '\n');
+    }
+    
+    // Adiciona a nova linha formatada
+    fs.appendFileSync(CSV_FILE_PATH, csvLine);
+    console.log(`[CSV-WRITER] Nova mensagem para ${from} registrada.`);
+    res.status(200).json(newRowObject);
+});
+
+/**
+ * Extrai os dados essenciais de uma mensagem de um payload de webhook do WhatsApp.
+ * Utiliza optional chaining (?.) para navegar com segurança pelo objeto, evitando erros
+ * se alguma propriedade não existir.
+ * 
+ * @param {object} webhookPayload - O objeto JSON completo recebido da Meta.
+ * @returns {object|null} - Um objeto contendo os dados extraídos, ou null se nenhuma mensagem válida for encontrada.
+ *                          O objeto retornado terá a forma:
+ *                          {
+ *                              from: string,      // Número de quem enviou (ex: "16315551234")
+ *                              id: string,        // ID da mensagem (wamid)
+ *                              timestamp: string, // Timestamp da mensagem
+ *                              type: string,      // Tipo da mensagem (ex: "text")
+ *                              body: string       // O conteúdo da mensagem de texto
+ *                          }
+ */
+function extractMessageData(webhookPayload) {
+    // Navega de forma segura pela estrutura do payload
+    const message = webhookPayload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
+
+    // Se não encontrou um objeto de mensagem, retorna nulo
+    if (!message) {
+        return null;
+    }
+
+    // Extrai os campos principais
+    const from = message.from;
+    const id = message.id;
+    const timestamp = message.timestamp;
+    const type = message.type;
+
+    // Extrai o corpo do texto apenas se o tipo for 'text'
+    const body = type === 'text' ? message.text?.body : null;
+
+    // Retorna o objeto simplificado, garantindo que todos os campos obrigatórios existam
+    if (from && id && timestamp && type) {
+        return {
+            from,
+            id,
+            timestamp,
+            type,
+            body // Será null se o tipo não for 'text'
+        };
+    }
+
+    // Retorna nulo se algum dos campos essenciais estiver faltando
+    return null;
+}
+
 // 1. Processador para 'messages'
 processRouter.post('/messages', (req, res) => {
-    const { from, type, timestamp, id, ...details } = req.body;
-    let content = '';
 
-    if (type === 'text') content = details.text.body;
-    else if (type === 'image') content = `ID da imagem: ${details.image.id}`;
-    else if (type === 'button') content = `Texto do botão: ${details.button.text}`;
-    else if (type === 'interactive') content = `ID da resposta: ${details.interactive[details.interactive.type].id}`;
-    else content = JSON.stringify(details); // Para outros tipos
+    console.log(req.body);
 
-    appendToCsv('messages.csv', { timestamp, from, type, content, message_id: id });
-    res.sendStatus(200);
+    const body = req.body;
+
+    if (body.object === 'whatsapp_business_account') {
+        const extractedData = extractMessageData(body);
+
+        if (extractedData && extractedData.type === 'text') {
+            console.log("--- Dados da Mensagem Extraídos ---");
+            console.log(`De: ${extractedData.from}`);
+            console.log(`ID (wamid): ${extractedData.id}`);
+            console.log(`Timestamp: ${extractedData.timestamp}`);
+            console.log(`Tipo: ${extractedData.type}`);
+            console.log(`Corpo do Texto: ${extractedData.body}`);
+
+            const direction = "in";
+            const headers = ['timestamp', 'from', 'type', 'content', 'message_id', 'direction', 'is_read'];
+    
+            const newRowObject = {
+                timestamp: extractedData.timestamp,
+                from: extractedData.from,
+                type: 'text',
+                content: extractedData.body,
+                message_id: extractedData.id,
+                direction: direction,
+                is_read: direction === 'out' ? 'true' : 'false'
+            };
+
+            const csvLine = formatCsvRow(newRowObject, headers) + '\n';
+            
+            const logLine = `${newRowObject.timestamp},${newRowObject.from},${newRowObject.type},"${newRowObject.content}",${newRowObject.message_id},${newRowObject.direction},${newRowObject.is_read}\n`;
+            
+            console.log('csvLine');
+            console.log(csvLine);
+            
+            // Se o arquivo não existe, cria com o cabeçalho (sem aspas)
+            if (!fs.existsSync(CSV_FILE_PATH)) {
+                fs.writeFileSync(CSV_FILE_PATH, headers.join(',') + '\n');
+            }
+            
+            // Adiciona a nova linha formatada
+            fs.appendFileSync(CSV_FILE_PATH, csvLine);
+            console.log(`[CSV-WRITER] Nova mensagem para ${extractedData.from} registrada.`);
+            
+
+            // A partir daqui, você pode usar o objeto 'extractedData' para
+            // passar para seu agente de IA, salvar no banco de dados, etc.
+            // Ex: const intent = interpretIntent(extractedData.body);
+
+        } else if (extractedData) {
+            console.log(`Recebida uma mensagem do tipo '${extractedData.type}', que não é texto.`);
+        }
+        
+        res.sendStatus(200);
+    } else {
+        res.sendStatus(404);
+    }
 });
 
 // 2. Processador para 'account_update'
@@ -318,17 +297,21 @@ app.post('/whatsapp', async (req, res) => {
         
         if (field && value) {
             console.log(`\n[ROUTER] Recebida notificação para o campo: '${field}'`);
+
+            let payload = JSON.stringify(value);
+
+            if(field == "messages")
+                payload = JSON.stringify(body);
             
             // Aqui está a mágica: redirecionamos internamente a requisição.
             // Usamos uma chamada `fetch` para o nosso próprio servidor.
             // Isso mantém o código limpo e desacoplado.
-            try { 
-                //  production
+            try {
                 // await fetch(`https://www.campanhadoaparelho.com.br/process/${field}`, {
-                await fetch(`http://localhost:${PORT}/process/${field}`, {
+                await fetch(`http://localhost:5000/process/${field}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(value)
+                    body: payload
                 });
             } catch (error) {
                 console.error(`[ROUTER] Erro ao redirecionar para /process/${field}:`, error);
